@@ -2,27 +2,25 @@ package com.example.demo.Controller;
 
 
 import com.example.demo.model.CarInfo;
+import com.example.demo.service.CarInfoAnalyzerService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Optional;
+
 @RestController
 public class CarInfoController {
 
-    @GetMapping("/analyze")
-    public String analyzeText(@RequestParam String text) {
-        // Возвращаем текст, который был передан в параметре запроса
-        return text;
-    }
+    @Autowired
+    private CarInfoAnalyzerService analyzerService;
 
-    @GetMapping("/car")
-    public CarInfo getCarInfo(
-            @RequestParam String vin,
-            @RequestParam String make,
-            @RequestParam String model,
-            @RequestParam int year
-    ) {
-        // Возвращаем данные об авто в формате JSON
-        return new CarInfo(vin, make, model, year);
+    // Принимает текст на анализ и возвращает найденные данные об авто
+    @GetMapping("/analyze")
+    public Object analyzeText(@RequestParam String text) {
+        Optional<CarInfo> carInfo = analyzerService.analyzeText(text);
+        // Возвращаем результат анализа или null, если ничего не найдено
+        return carInfo.orElse(null);
     }
 }
