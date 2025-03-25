@@ -6,25 +6,28 @@ import com.example.demo.repository.CarInfoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
-import java.util.regex.Pattern;
 
 @Service
-public class CarInfoAnalyzerService {
+public class CarInfoService {
+
     @Autowired
     private CarInfoRepository carInfoRepository;
 
-    private static final Pattern VIN_PATTERN = Pattern.compile("[A-HJ-NPR-Z0-9]{17}");
+    public List<CarInfo> getAllCars() {
+        return carInfoRepository.findAll();
+    }
 
-    public Optional<CarInfo> findCarByVin(String vin) {
+    public Optional<CarInfo> getCarByVin(String vin) {
         return carInfoRepository.findByVin(vin);
     }
 
-    public CarInfo saveCar(CarInfo carInfo) {
+    public CarInfo addCar(CarInfo carInfo) {
         return carInfoRepository.save(carInfo);
     }
 
-    public void deleteCar(String vin) {
+    public void deleteCarByVin(String vin) {
         carInfoRepository.deleteById(vin);
     }
 }
