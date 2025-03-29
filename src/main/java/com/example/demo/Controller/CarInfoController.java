@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/cars")  // Добавлен /api для соответствия запросам
+@RequestMapping("/cars")
 public class CarInfoController {
 
     @Autowired
@@ -32,8 +32,19 @@ public class CarInfoController {
         return carInfoService.addCar(carInfo);
     }
 
+    @PutMapping("/{vin}")
+    public ResponseEntity<CarInfo> updateCar(@PathVariable String vin, @RequestBody CarInfo carInfoDetails) {
+        return carInfoService.updateCar(vin, carInfoDetails)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
     @DeleteMapping("/{vin}")
-    public void deleteCar(@PathVariable String vin) {
-        carInfoService.deleteCarByVin(vin);
+    public ResponseEntity<Void> deleteCar(@PathVariable String vin) {
+        if (carInfoService.deleteCarByVin(vin)) {
+            return ResponseEntity.noContent().build();
+        } else {
+            return ResponseEntity.notFound().build();
+        }
     }
 }
