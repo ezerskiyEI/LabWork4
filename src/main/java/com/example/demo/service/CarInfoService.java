@@ -27,7 +27,20 @@ public class CarInfoService {
         return carInfoRepository.save(carInfo);
     }
 
-    public void deleteCarByVin(String vin) {
-        carInfoRepository.deleteById(vin);
+    public Optional<CarInfo> updateCar(String vin, CarInfo carInfoDetails) {
+        return carInfoRepository.findByVin(vin).map(existingCar -> {
+            existingCar.setMake(carInfoDetails.getMake());
+            existingCar.setModel(carInfoDetails.getModel());
+            existingCar.setYear(carInfoDetails.getYear());
+            return carInfoRepository.save(existingCar);
+        });
+    }
+
+    public boolean deleteCarByVin(String vin) {
+        if (carInfoRepository.existsById(vin)) {
+            carInfoRepository.deleteById(vin);
+            return true;
+        }
+        return false;
     }
 }
