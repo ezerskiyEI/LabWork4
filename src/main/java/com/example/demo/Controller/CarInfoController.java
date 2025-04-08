@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/cars")  // Добавлен /api для соответствия запросам
+@RequestMapping("/cars")
 public class CarInfoController {
 
     @Autowired
@@ -35,5 +35,11 @@ public class CarInfoController {
     @DeleteMapping("/{vin}")
     public void deleteCar(@PathVariable String vin) {
         carInfoService.deleteCarByVin(vin);
+    }
+
+    // Новый кастомный эндпоинт по имени владельца
+    @GetMapping("/by-owner")
+    public List<CarInfo> getCarsByOwnerName(@RequestParam String ownerName) {
+        return carInfoService.getCarsByOwnerName(ownerName);
     }
 }
