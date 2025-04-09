@@ -56,4 +56,8 @@ public class OwnerController {
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> 03f5d34f8d291d57e2ae16c0d816222fffb062d1

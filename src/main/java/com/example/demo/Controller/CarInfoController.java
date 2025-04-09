@@ -32,14 +32,28 @@ public class CarInfoController {
         return carInfoService.addCar(carInfo);
     }
 
-    @DeleteMapping("/{vin}")
-    public void deleteCar(@PathVariable String vin) {
-        carInfoService.deleteCarByVin(vin);
+    @PutMapping("/{vin}")
+    public ResponseEntity<CarInfo> updateCar(@PathVariable String vin, @RequestBody CarInfo carInfoDetails) {
+        return carInfoService.updateCar(vin, carInfoDetails)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
+<<<<<<< HEAD
     // Новый кастомный эндпоинт по имени владельца
     @GetMapping("/by-owner")
     public List<CarInfo> getCarsByOwnerName(@RequestParam String ownerName) {
         return carInfoService.getCarsByOwnerName(ownerName);
     }
 }
+=======
+    @DeleteMapping("/{vin}")
+    public ResponseEntity<Void> deleteCar(@PathVariable String vin) {
+        if (carInfoService.deleteCarByVin(vin)) {
+            return ResponseEntity.noContent().build();
+        } else {
+            return ResponseEntity.notFound().build();
+        }
+    }
+}
+>>>>>>> 03f5d34f8d291d57e2ae16c0d816222fffb062d1

@@ -38,6 +38,7 @@ public class CarInfoService {
         return saved;
     }
 
+<<<<<<< HEAD
     public void deleteCarByVin(String vin) {
         carInfoRepository.deleteById(vin);
         carCache.remove(vin);
@@ -45,5 +46,22 @@ public class CarInfoService {
 
     public List<CarInfo> getCarsByOwnerName(String ownerName) {
         return carInfoRepository.findCarsByOwnerName(ownerName);
+=======
+    public Optional<CarInfo> updateCar(String vin, CarInfo carInfoDetails) {
+        return carInfoRepository.findByVin(vin).map(existingCar -> {
+            existingCar.setMake(carInfoDetails.getMake());
+            existingCar.setModel(carInfoDetails.getModel());
+            existingCar.setYear(carInfoDetails.getYear());
+            return carInfoRepository.save(existingCar);
+        });
+>>>>>>> 03f5d34f8d291d57e2ae16c0d816222fffb062d1
+    }
+
+    public boolean deleteCarByVin(String vin) {
+        if (carInfoRepository.existsById(vin)) {
+            carInfoRepository.deleteById(vin);
+            return true;
+        }
+        return false;
     }
 }
