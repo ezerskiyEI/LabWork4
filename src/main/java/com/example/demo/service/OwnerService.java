@@ -1,8 +1,8 @@
 package com.example.demo.service;
 
-import com.example.demo.model.CarInfo;
+
+import com.example.demo.Cache.EntityCache;
 import com.example.demo.model.Owner;
-import com.example.demo.repository.CarInfoRepository;
 import com.example.demo.repository.OwnerRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -17,48 +17,38 @@ public class OwnerService {
     private OwnerRepository ownerRepository;
 
     @Autowired
-    private CarInfoRepository carInfoRepository;
+    private EntityCache entityCache;
 
     public List<Owner> getAllOwners() {
         return ownerRepository.findAll();
     }
 
     public Optional<Owner> getOwnerById(Long id) {
-        return ownerRepository.findById(id);
+        String key = "owner:" + id;
+        if (entityCache.contains(key)) {
+            return Optional.ofNullable(entityCache.get(key, Owner.class));
+        }
+
+        Optional<Owner> owner = ownerRepository.findById(id);
+        owner.ifPresent(o -> entityCache.put(key, o));
+        return owner;
     }
 
     public Owner addOwner(Owner owner) {
-        return ownerRepository.save(owner);
+        Owner saved = ownerRepository.save(owner);
+        entityCache.put("owner:" + saved.getId(), saved);
+        return saved;
     }
 
-    public Optional<Owner> updateOwner(Long id, Owner ownerDetails) {
-        return ownerRepository.findById(id).map(existingOwner -> {
-            existingOwner.setName(ownerDetails.getName());
-            return ownerRepository.save(existingOwner);
-        });
+    public Owner updateOwner(Long id, Owner updated) {
+        updated.setId(id);
+        Owner saved = ownerRepository.save(updated);
+        entityCache.put("owner:" + id, saved);
+        return saved;
     }
 
-    public boolean deleteOwner(Long id) {
-        if (ownerRepository.existsById(id)) {
-            ownerRepository.deleteById(id);
-            return true;
-        }
-        return false;
+    public void deleteOwner(Long id) {
+        ownerRepository.deleteById(id);
+        entityCache.evict("owner:" + id);
     }
-
-    public Optional<Owner> addCarToOwner(Long ownerId, String vin) {
-        Optional<Owner> ownerOptional = ownerRepository.findById(ownerId);
-        Optional<CarInfo> carOptional = carInfoRepository.findByVin(vin);
-
-        if (ownerOptional.isPresent() && carOptional.isPresent()) {
-            Owner owner = ownerOptional.get();
-            owner.getCars().add(carOptional.get());
-            return Optional.of(ownerRepository.save(owner));
-        }
-        return Optional.empty();
-    }
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> 03f5d34f8d291d57e2ae16c0d816222fffb062d1

@@ -1,6 +1,5 @@
 package com.example.demo.Controller;
 
-import com.example.demo.model.CarInfo;
 import com.example.demo.model.Owner;
 import com.example.demo.service.OwnerService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,30 +33,13 @@ public class OwnerController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Owner> updateOwner(@PathVariable Long id, @RequestBody Owner ownerDetails) {
-        return ownerService.updateOwner(id, ownerDetails)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<Owner> updateOwner(@PathVariable Long id, @RequestBody Owner updated) {
+        return ResponseEntity.ok(ownerService.updateOwner(id, updated));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteOwner(@PathVariable Long id) {
-        if (ownerService.deleteOwner(id)) {
-            return ResponseEntity.noContent().build();
-        } else {
-            return ResponseEntity.notFound().build();
-        }
+        ownerService.deleteOwner(id);
+        return ResponseEntity.noContent().build();
     }
-
-    // Добавление машины к владельцу
-    @PostMapping("/{ownerId}/cars/{vin}")
-    public ResponseEntity<Owner> addCarToOwner(@PathVariable Long ownerId, @PathVariable String vin) {
-        return ownerService.addCarToOwner(ownerId, vin)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> 03f5d34f8d291d57e2ae16c0d816222fffb062d1
