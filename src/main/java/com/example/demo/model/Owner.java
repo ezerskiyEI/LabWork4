@@ -11,7 +11,6 @@ public class Owner {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
     private String name;
 
     @ManyToMany(cascade = CascadeType.ALL)
@@ -25,17 +24,13 @@ public class Owner {
 
     public Owner() {}
 
-    public Owner(String name) {
-        this.name = name;
-    }
+    public Owner(String name) { this.name = name; }
 
     // Getters and Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
-
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
-
     public Set<CarInfo> getCars() { return cars; }
     public void setCars(Set<CarInfo> cars) { this.cars = cars; }
 }

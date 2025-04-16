@@ -1,13 +1,12 @@
 package com.example.demo.Controller;
 
 import com.example.demo.model.CarInfo;
-import com.example.demo.repository.CarInfoRepository;
 import com.example.demo.service.CarInfoService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/cars")
@@ -16,19 +15,14 @@ public class CarInfoController {
     @Autowired
     private CarInfoService carInfoService;
 
-    @Autowired
-    private CarInfoRepository carInfoRepository;
-
     @GetMapping
     public List<CarInfo> getAllCars() {
         return carInfoService.getAllCars();
     }
 
     @GetMapping("/{vin}")
-    public ResponseEntity<CarInfo> getCarByVin(@PathVariable String vin) {
-        return carInfoService.getCarByVin(vin)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    public Optional<CarInfo> getCarByVin(@PathVariable String vin) {
+        return carInfoService.getCarByVin(vin);
     }
 
     @PostMapping
@@ -37,22 +31,17 @@ public class CarInfoController {
     }
 
     @PutMapping("/{vin}")
-    public ResponseEntity<CarInfo> updateCar(@PathVariable String vin, @RequestBody CarInfo updatedCar) {
-        try {
-            return ResponseEntity.ok(carInfoService.updateCar(vin, updatedCar));
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.notFound().build();
-        }
+    public CarInfo updateCar(@PathVariable String vin, @RequestBody CarInfo carInfo) {
+        return carInfoService.updateCar(vin, carInfo);
     }
 
     @DeleteMapping("/{vin}")
-    public ResponseEntity<Void> deleteCar(@PathVariable String vin) {
-        carInfoService.deleteCarByVin(vin);
-        return ResponseEntity.noContent().build();
+    public void deleteCar(@PathVariable String vin) {
+        carInfoService.deleteCar(vin);
     }
 
     @GetMapping("/by-owner")
     public List<CarInfo> getCarsByOwnerName(@RequestParam String ownerName) {
-        return carInfoRepository.findCarsByOwnerName(ownerName);
+        return carInfoService.getCarsByOwnerName(ownerName);
     }
 }

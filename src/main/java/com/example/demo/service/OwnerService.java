@@ -1,7 +1,7 @@
 package com.example.demo.service;
 
 
-import com.example.demo.Cache.EntityCache;
+import com.example.demo.Cache.AppCache;
 import com.example.demo.model.Owner;
 import com.example.demo.repository.OwnerRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,38 +17,38 @@ public class OwnerService {
     private OwnerRepository ownerRepository;
 
     @Autowired
-    private EntityCache entityCache;
+    private AppCache appCache;
 
     public List<Owner> getAllOwners() {
         return ownerRepository.findAll();
     }
 
     public Optional<Owner> getOwnerById(Long id) {
-        String key = "owner:" + id;
-        if (entityCache.contains(key)) {
-            return Optional.ofNullable(entityCache.get(key, Owner.class));
+        Owner cached = appCache.getOwner(id);
+        if (cached != null) {
+            return Optional.of(cached);
         }
 
         Optional<Owner> owner = ownerRepository.findById(id);
-        owner.ifPresent(o -> entityCache.put(key, o));
+        owner.ifPresent(o -> appCache.putOwner(id, o));
         return owner;
     }
 
     public Owner addOwner(Owner owner) {
         Owner saved = ownerRepository.save(owner);
-        entityCache.put("owner:" + saved.getId(), saved);
+        appCache.putOwner(saved.getId(), saved);
         return saved;
     }
 
-    public Owner updateOwner(Long id, Owner updated) {
-        updated.setId(id);
-        Owner saved = ownerRepository.save(updated);
-        entityCache.put("owner:" + id, saved);
-        return saved;
+    public Owner updateOwner(Long id, Owner owner) {
+        owner.setId(id);
+        Owner updated = ownerRepository.save(owner);
+        appCache.putOwner(id, updated);
+        return updated;
     }
 
     public void deleteOwner(Long id) {
         ownerRepository.deleteById(id);
-        entityCache.evict("owner:" + id);
+        appCache.evictOwner(id);
     }
 }
