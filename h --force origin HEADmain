@@ -1,0 +1,27 @@
+[33mddc069c[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m Рефакторинг кэша: AppCache вместо EntityCache, обновление моделей и сервисов
+[33md12644b[m application.properties
+[33m1f820f4[m first commit
+[33md2eb493[m[33m ([m[1;31mmyorigin/main[m[33m)[m Merge remote changes
+[33m3687baf[m first commit
+[33m03f5d34[m OwnerService.java
+[33m28db8c8[m CarInfoService.java
+[33m553b6f2[m OwnerController.java
+[33mea74a2c[m  CarInfoController.java
+[33mfafc821[m README.md
+[33m2353d1b[m  README.md
+[33m29a3f99[m application.properties
+[33m95687f6[m Add files via upload
+[33mefb409f[m README.md
+[33m5d65541[m First commit
+[33m29908be[m first commit
+[33m5ca1b84[m first commit
+[33m70dea45[m first commit
+[33m1da76d3[m first commit
+[33m4a7be83[m CarInfoAnalyzerService.java
+[33m89e6346[m first commit
+[33m100314f[m Update README.md
+[33m1f490ae[m Update README.md
+[33m373b88e[m first commit
+[33m4b1f467[m README.md
+[33m631ac80[m first commit
+[33m996cd65[m[33m ([m[1;31mgithub/main[m[33m)[m first commit

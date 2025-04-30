@@ -19,7 +19,6 @@ public class CarInfo {
     private Set<Owner> owners = new HashSet<>();
 
     public CarInfo() {}
-
     public CarInfo(String vin, String make, String model, int year) {
         this.vin = vin;
         this.make = make;
@@ -27,7 +26,6 @@ public class CarInfo {
         this.year = year;
     }
 
-    // Getters and Setters
     public String getVin() { return vin; }
     public void setVin(String vin) { this.vin = vin; }
     public String getMake() { return make; }

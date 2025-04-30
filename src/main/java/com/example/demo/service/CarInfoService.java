@@ -8,51 +8,50 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class CarInfoService {
 
     @Autowired
-    private CarInfoRepository carInfoRepository;
+    private CarInfoRepository carRepo;
 
     @Autowired
-    private AppCache appCache;
+    private AppCache cache;
 
     public List<CarInfo> getAllCars() {
-        return carInfoRepository.findAll();
+        return carRepo.findAll();
     }
 
-    public Optional<CarInfo> getCarByVin(String vin) {
-        CarInfo cached = appCache.getCar(vin);
-        if (cached != null) {
-            return Optional.of(cached);
-        }
+    public CarInfo getCarByVin(String vin) {
+        CarInfo cached = cache.getCar(vin);
+        if (cached != null) return cached;
 
-        Optional<CarInfo> car = carInfoRepository.findByVin(vin);
-        car.ifPresent(c -> appCache.putCar(vin, c));
-        return car;
+        return carRepo.findById(vin).map(car -> {
+            cache.putCar(vin, car);
+            return car;
+        }).orElse(null);
     }
 
     public CarInfo addCar(CarInfo carInfo) {
-        CarInfo saved = carInfoRepository.save(carInfo);
-        appCache.putCar(saved.getVin(), saved);
+        CarInfo saved = carRepo.save(carInfo);
+        cache.putCar(saved.getVin(), saved);
         return saved;
     }
 
-    public CarInfo updateCar(String vin, CarInfo carInfo) {
-        carInfo.setVin(vin);
-        CarInfo updated = carInfoRepository.save(carInfo);
-        appCache.putCar(vin, updated);
+    public CarInfo updateCar(String vin, CarInfo car) {
+        if (!carRepo.existsById(vin)) return null;
+        car.setVin(vin);
+        CarInfo updated = carRepo.save(car);
+        cache.putCar(vin, updated);
         return updated;
     }
 
     public void deleteCar(String vin) {
-        carInfoRepository.deleteByVin(vin);
-        appCache.evictCar(vin);
+        carRepo.deleteById(vin);
+        cache.evictCar(vin);
     }
 
-    public List<CarInfo> getCarsByOwnerName(String ownerName) {
-        return carInfoRepository.findCarsByOwnerName(ownerName);
+    public List<CarInfo> getCarsByOwnerName(String name) {
+        return carRepo.findByOwnerName(name);
     }
 }

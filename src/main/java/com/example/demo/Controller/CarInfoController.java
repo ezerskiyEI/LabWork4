@@ -6,42 +6,41 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/cars")
 public class CarInfoController {
 
     @Autowired
-    private CarInfoService carInfoService;
+    private CarInfoService service;
 
     @GetMapping
-    public List<CarInfo> getAllCars() {
-        return carInfoService.getAllCars();
+    public List<CarInfo> getAll() {
+        return service.getAllCars();
     }
 
     @GetMapping("/{vin}")
-    public Optional<CarInfo> getCarByVin(@PathVariable String vin) {
-        return carInfoService.getCarByVin(vin);
-    }
-
-    @PostMapping
-    public CarInfo addCar(@RequestBody CarInfo carInfo) {
-        return carInfoService.addCar(carInfo);
-    }
-
-    @PutMapping("/{vin}")
-    public CarInfo updateCar(@PathVariable String vin, @RequestBody CarInfo carInfo) {
-        return carInfoService.updateCar(vin, carInfo);
-    }
-
-    @DeleteMapping("/{vin}")
-    public void deleteCar(@PathVariable String vin) {
-        carInfoService.deleteCar(vin);
+    public CarInfo getByVin(@PathVariable String vin) {
+        return service.getCarByVin(vin);
     }
 
     @GetMapping("/by-owner")
-    public List<CarInfo> getCarsByOwnerName(@RequestParam String ownerName) {
-        return carInfoService.getCarsByOwnerName(ownerName);
+    public List<CarInfo> getByOwner(@RequestParam String name) {
+        return service.getCarsByOwnerName(name);
+    }
+
+    @PostMapping
+    public CarInfo add(@RequestBody CarInfo car) {
+        return service.addCar(car);
+    }
+
+    @PutMapping("/{vin}")
+    public CarInfo update(@PathVariable String vin, @RequestBody CarInfo car) {
+        return service.updateCar(vin, car);
+    }
+
+    @DeleteMapping("/{vin}")
+    public void delete(@PathVariable String vin) {
+        service.deleteCar(vin);
     }
 }
