@@ -25,7 +25,6 @@ public class CarInfo {
         this.model = model;
         this.year = year;
     }
-
     public String getVin() { return vin; }
     public void setVin(String vin) { this.vin = vin; }
     public String getMake() { return make; }
