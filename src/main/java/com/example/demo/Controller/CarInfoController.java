@@ -10,13 +10,14 @@ import java.util.List;
 @RestController
 @RequestMapping("/cars")
 public class CarInfoController {
-
     @Autowired
     private CarInfoService service;
 
-    @GetMapping
-    public List<CarInfo> getAll() {
-        return service.getAllCars();
+    @GetMapping("/by-make-and-year")
+    public List<CarInfo> getCarsByMakeAndYear(
+            @RequestParam String make,
+            @RequestParam int minYear) {
+        return service.getCarsByMakeAndYear(make, minYear);
     }
 
     @GetMapping("/{vin}")

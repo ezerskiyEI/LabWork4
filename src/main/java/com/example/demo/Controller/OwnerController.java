@@ -10,32 +10,35 @@ import java.util.List;
 @RestController
 @RequestMapping("/owners")
 public class OwnerController {
+    private final OwnerService ownerService;
 
     @Autowired
-    private OwnerService service;
+    public OwnerController(OwnerService ownerService) {
+        this.ownerService = ownerService;
+    }
 
     @GetMapping
     public List<Owner> getAll() {
-        return service.getAllOwners();
+        return ownerService.getAllOwners();
     }
 
     @GetMapping("/{id}")
     public Owner getById(@PathVariable Long id) {
-        return service.getOwner(id);
+        return ownerService.getOwner(id);
     }
 
     @PostMapping
     public Owner add(@RequestBody Owner owner) {
-        return service.addOwner(owner);
+        return ownerService.addOwner(owner);
     }
 
     @PutMapping("/{id}")
     public Owner update(@PathVariable Long id, @RequestBody Owner owner) {
-        return service.updateOwner(id, owner);
+        return ownerService.updateOwner(id, owner);
     }
 
     @DeleteMapping("/{id}")
     public void delete(@PathVariable Long id) {
-        service.deleteOwner(id);
+        ownerService.deleteOwner(id);
     }
 }
