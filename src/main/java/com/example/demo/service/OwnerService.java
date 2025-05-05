@@ -1,6 +1,7 @@
 package com.example.demo.service;
 
 import com.example.demo.Cache.AppCache;
+import com.example.demo.exception.NotFoundException;
 import com.example.demo.model.Owner;
 import com.example.demo.repository.OwnerRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,48 +21,59 @@ public class OwnerService {
     }
 
     public List<Owner> getAllOwners() {
-        String cacheKey = "all_owners";
-        List<Owner> cached = cache.get(cacheKey);
-        if (cached != null) {
-            return cached;
-        }
-
-        List<Owner> owners = repository.findAll();
-        cache.put(cacheKey, owners);
-        return owners;
+        return cache.getOwnerList("all_owners")
+                .orElseGet(() -> {
+                    List<Owner> owners = repository.findAll();
+                    cache.putOwnerList("all_owners", owners);
+                    return owners;
+                });
     }
 
     public Owner getOwner(Long id) {
-        Owner cached = cache.getOwner(id);
-        if (cached != null) {
-            return cached;
+        if (id == null || id <= 0) {
+            throw new IllegalArgumentException("Invalid owner ID");
         }
 
-        Owner owner = repository.findById(id).orElse(null);
-        if (owner != null) {
-            cache.putOwner(id, owner);
-        }
-        return owner;
+        return cache.getOwner(id)
+                .orElseGet(() -> {
+                    Owner owner = repository.findById(id)
+                            .orElseThrow(() -> new NotFoundException("Owner not found with id: " + id));
+                    cache.putOwner(owner);
+                    return owner;
+                });
     }
 
     public Owner addOwner(Owner owner) {
         Owner saved = repository.save(owner);
-        cache.putOwner(saved.getId(), saved);
-        cache.evict("all_owners");
+        cache.putOwner(saved);
+        cache.evictAllOwnerLists();
         return saved;
     }
 
     public Owner updateOwner(Long id, Owner owner) {
+        if (!repository.existsById(id)) {
+            throw new NotFoundException("Owner not found with id: " + id);
+        }
         owner.setId(id);
         Owner updated = repository.save(owner);
-        cache.putOwner(id, updated);
-        cache.evict("all_owners");
+        cache.putOwner(updated);
+        cache.evictAllOwnerLists();
         return updated;
     }
 
     public void deleteOwner(Long id) {
         repository.deleteById(id);
         cache.evictOwner(id);
-        cache.evict("all_owners");
+        cache.evictAllOwnerLists();
+    }
+
+    public List<Owner> getOwnersByCarVin(String vin) {
+        String cacheKey = "owners_by_car_" + vin;
+        return cache.getOwnerList(cacheKey)
+                .orElseGet(() -> {
+                    List<Owner> owners = repository.findByCarsVin(vin);
+                    cache.putOwnerList(cacheKey, owners);
+                    return owners;
+                });
     }
 }

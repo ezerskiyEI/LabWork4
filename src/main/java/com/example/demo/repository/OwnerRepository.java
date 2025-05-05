@@ -10,6 +10,6 @@ import java.util.List;
 
 @Repository
 public interface OwnerRepository extends JpaRepository<Owner, Long> {
-    @Query("SELECT o FROM Owner o JOIN o.cars c WHERE c.year > :minYear")
-    List<Owner> findOwnersWithCarsNewerThan(@Param("minYear") int minYear);
+    @Query("SELECT o FROM Owner o JOIN o.cars c WHERE c.vin = :vin")
+    List<Owner> findByCarsVin(@Param("vin") String vin);
 }

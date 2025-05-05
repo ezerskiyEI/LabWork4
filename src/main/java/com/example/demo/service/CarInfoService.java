@@ -1,13 +1,13 @@
 package com.example.demo.service;
 
 import com.example.demo.Cache.AppCache;
+import com.example.demo.exception.NotFoundException;
 import com.example.demo.model.CarInfo;
 import com.example.demo.repository.CarInfoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class CarInfoService {
@@ -20,88 +20,69 @@ public class CarInfoService {
         this.cache = cache;
     }
 
-    public List<CarInfo> getCarsByMakeAndYear(String make, int minYear) {
-        String cacheKey = String.format("cars_make_%s_year_%d", make, minYear);
-        List<CarInfo> cached = cache.get(cacheKey);
-        if (cached != null) {
-            return cached;
-        }
+    public List<CarInfo> findByYearAndMake(int year, String make) {
+        String cacheKey = "cars_by_year_" + year + "_make_" + make;
+        return cache.getCarList(cacheKey)
+                .orElseGet(() -> {
+                    List<CarInfo> cars = repository.findByYearAndMake(year, make);
+                    cache.putCarList(cacheKey, cars);
+                    return cars;
+                });
+    }
 
-        List<CarInfo> cars = repository.findByMakeAndYearAfter(make, minYear);
-        cache.put(cacheKey, cars);
-        return cars;
+    public List<CarInfo> findByOwnerId(Long ownerId) {
+        String cacheKey = "cars_by_owner_" + ownerId;
+        return cache.getCarList(cacheKey)
+                .orElseGet(() -> {
+                    List<CarInfo> cars = repository.findByOwnerId(ownerId);
+                    cache.putCarList(cacheKey, cars);
+                    return cars;
+                });
     }
 
     public CarInfo getCarByVin(String vin) {
-        String cacheKey = "car_" + vin;
-        CarInfo cached = cache.get(cacheKey);
-        if (cached != null) {
-            return cached;
-        }
-
-        CarInfo car = repository.findById(vin).orElse(null);
-        if (car != null) {
-            cache.put(cacheKey, car);
-        }
-        return car;
+        return cache.getCar(vin)
+                .orElseGet(() -> {
+                    CarInfo car = repository.findById(vin)
+                            .orElseThrow(() -> new NotFoundException("Car not found with VIN: " + vin));
+                    cache.putCar(car);
+                    return car;
+                });
     }
 
-    public CarInfo addCar(CarInfo carInfo) {
-        CarInfo saved = repository.save(carInfo);
-        cache.put("car_" + saved.getVin(), saved);
-        clearCachedLists();
+    public CarInfo addCar(CarInfo car) {
+        CarInfo saved = repository.save(car);
+        cache.putCar(saved);
+        cache.evictAllCarLists();
+        cache.evictAllOwnerLists();
         return saved;
     }
 
     public CarInfo updateCar(String vin, CarInfo car) {
         if (!repository.existsById(vin)) {
-            return null;
+            throw new NotFoundException("Car not found with VIN: " + vin);
         }
         car.setVin(vin);
         CarInfo updated = repository.save(car);
-        cache.put("car_" + vin, updated);
-        clearCachedLists();
+        cache.putCar(updated);
+        cache.evictAllCarLists();
+        cache.evictAllOwnerLists();
         return updated;
     }
 
     public void deleteCar(String vin) {
         repository.deleteById(vin);
-        cache.evict("car_" + vin);
-        clearCachedLists();
-    }
-
-    public List<CarInfo> getCarsByOwnerName(String name) {
-        String cacheKey = "cars_by_owner_" + name.hashCode();
-        List<CarInfo> cached = cache.get(cacheKey);
-        if (cached != null) {
-            return cached;
-        }
-
-        List<CarInfo> cars = repository.findByOwnerName(name);
-        cache.put(cacheKey, cars);
-        return cars;
+        cache.evictCar(vin);
+        cache.evictAllCarLists();
+        cache.evictAllOwnerLists();
     }
 
     public List<CarInfo> getAllCars() {
-        String cacheKey = "all_cars";
-        List<CarInfo> cached = cache.get(cacheKey);
-        if (cached != null) {
-            return cached;
-        }
-
-        List<CarInfo> cars = repository.findAll();
-        cache.put(cacheKey, cars);
-        return cars;
-    }
-
-    private void clearCachedLists() {
-        List<String> allKeys = cache.getAllKeys();
-        if (allKeys != null) {
-            allKeys.stream()
-                    .filter(key -> key.startsWith("cars_make_") ||
-                            key.startsWith("cars_by_owner_") ||
-                            key.equals("all_cars"))
-                    .forEach(cache::evict);
-        }
+        return cache.getCarList("all_cars")
+                .orElseGet(() -> {
+                    List<CarInfo> cars = repository.findAll();
+                    cache.putCarList("all_cars", cars);
+                    return cars;
+                });
     }
 }

@@ -10,12 +10,9 @@ import java.util.List;
 
 @Repository
 public interface CarInfoRepository extends JpaRepository<CarInfo, String> {
-    @Query("SELECT c FROM CarInfo c JOIN c.owners o WHERE o.name = :ownerName")
-    List<CarInfo> findByOwnerName(@Param("ownerName") String ownerName);
+    @Query("SELECT c FROM CarInfo c WHERE c.year = :year AND c.make = :make")
+    List<CarInfo> findByYearAndMake(@Param("year") int year, @Param("make") String make);
 
-    @Query("SELECT c FROM CarInfo c WHERE c.make = :make AND c.year > :minYear")
-    List<CarInfo> findByMakeAndYearAfter(
-            @Param("make") String make,
-            @Param("minYear") int minYear
-    );
+    @Query("SELECT c FROM CarInfo c JOIN c.owners o WHERE o.id = :ownerId")
+    List<CarInfo> findByOwnerId(@Param("ownerId") Long ownerId);
 }

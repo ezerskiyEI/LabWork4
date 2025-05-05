@@ -11,9 +11,10 @@ public class Owner {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
     private String name;
 
-    @ManyToMany(cascade = CascadeType.ALL)
+    @ManyToMany
     @JsonIgnore
     @JoinTable(
             name = "owner_car",
@@ -21,10 +22,6 @@ public class Owner {
             inverseJoinColumns = @JoinColumn(name = "car_vin")
     )
     private Set<CarInfo> cars = new HashSet<>();
-
-    public Owner() {}
-    public Owner(String name) { this.name = name; }
-
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }

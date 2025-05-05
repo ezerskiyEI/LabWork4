@@ -1,0 +1,51 @@
+package com.example.demo.service;
+
+import com.example.demo.model.CarInfo;
+import org.springframework.stereotype.Service;
+
+import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+@Service
+public class CarInfoAnalyzerService {
+    private static final Pattern VIN_PATTERN = Pattern.compile("[A-HJ-NPR-Z0-9]{17}");
+    private static final Pattern YEAR_PATTERN = Pattern.compile("\\b(19|20)\\d{2}\\b");
+    private static final Pattern MAKE_MODEL_PATTERN = Pattern.compile("(Toyota|Honda|BMW|Audi|Mercedes|Ford|Volkswagen|Chevrolet)\\s+(\\w+)");
+
+    public Optional<CarInfo> analyzeText(String text) {
+        String vin = findVin(text);
+        if (vin == null) {
+            return Optional.empty();
+        }
+
+        int year = findYear(text);
+        String[] makeModel = findMakeAndModel(text);
+
+        CarInfo carInfo = new CarInfo();
+        carInfo.setVin(vin);
+        carInfo.setMake(makeModel[0]);
+        carInfo.setModel(makeModel[1]);
+        carInfo.setYear(year);
+
+        return Optional.of(carInfo);
+    }
+
+    private String findVin(String text) {
+        Matcher matcher = VIN_PATTERN.matcher(text);
+        return matcher.find() ? matcher.group() : null;
+    }
+
+    private int findYear(String text) {
+        Matcher matcher = YEAR_PATTERN.matcher(text);
+        return matcher.find() ? Integer.parseInt(matcher.group()) : 2000;
+    }
+
+    private String[] findMakeAndModel(String text) {
+        Matcher matcher = MAKE_MODEL_PATTERN.matcher(text);
+        if (matcher.find()) {
+            return new String[]{matcher.group(1), matcher.group(2)};
+        }
+        return new String[]{"Unknown", "Unknown"};
+    }
+}

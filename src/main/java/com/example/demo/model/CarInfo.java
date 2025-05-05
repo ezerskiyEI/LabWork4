@@ -10,21 +10,15 @@ import java.util.Set;
 public class CarInfo {
     @Id
     private String vin;
+
     private String make;
     private String model;
     private int year;
 
-    @ManyToMany(mappedBy = "cars", cascade = CascadeType.ALL)
+    @ManyToMany(mappedBy = "cars")
     @JsonIgnore
     private Set<Owner> owners = new HashSet<>();
 
-    public CarInfo() {}
-    public CarInfo(String vin, String make, String model, int year) {
-        this.vin = vin;
-        this.make = make;
-        this.model = model;
-        this.year = year;
-    }
     public String getVin() { return vin; }
     public void setVin(String vin) { this.vin = vin; }
     public String getMake() { return make; }
