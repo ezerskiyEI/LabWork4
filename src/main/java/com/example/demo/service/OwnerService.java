@@ -1,13 +1,13 @@
 package com.example.demo.service;
 
 import com.example.demo.Cache.AppCache;
-import com.example.demo.exception.NotFoundException;
 import com.example.demo.model.Owner;
 import com.example.demo.repository.OwnerRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class OwnerService {
@@ -29,18 +29,18 @@ public class OwnerService {
                 });
     }
 
-    public Owner getOwner(Long id) {
+    public Optional<Owner> getOwner(Long id) {
         if (id == null || id <= 0) {
-            throw new IllegalArgumentException("Invalid owner ID");
+            return Optional.empty();
         }
 
-        return cache.getOwner(id)
-                .orElseGet(() -> {
-                    Owner owner = repository.findById(id)
-                            .orElseThrow(() -> new NotFoundException("Owner not found with id: " + id));
-                    cache.putOwner(owner);
-                    return owner;
-                });
+        Optional<Owner> cachedOwner = cache.getOwner(id);
+        if (cachedOwner.isPresent()) {
+            return cachedOwner;
+        }
+        Optional<Owner> dbOwner = repository.findById(id);
+        dbOwner.ifPresent(owner -> cache.putOwner(owner));
+        return dbOwner;
     }
 
     public Owner addOwner(Owner owner) {
@@ -50,21 +50,25 @@ public class OwnerService {
         return saved;
     }
 
-    public Owner updateOwner(Long id, Owner owner) {
+    public Optional<Owner> updateOwner(Long id, Owner owner) {
         if (!repository.existsById(id)) {
-            throw new NotFoundException("Owner not found with id: " + id);
+            return Optional.empty();
         }
         owner.setId(id);
         Owner updated = repository.save(owner);
         cache.putOwner(updated);
         cache.evictAllOwnerLists();
-        return updated;
+        return Optional.of(updated);
     }
 
-    public void deleteOwner(Long id) {
+    public boolean deleteOwner(Long id) {
+        if (!repository.existsById(id)) {
+            return false;
+        }
         repository.deleteById(id);
         cache.evictOwner(id);
         cache.evictAllOwnerLists();
+        return true;
     }
 
     public List<Owner> getOwnersByCarVin(String vin) {

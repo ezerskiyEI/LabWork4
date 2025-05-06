@@ -1,13 +1,13 @@
 package com.example.demo.service;
 
 import com.example.demo.Cache.AppCache;
-import com.example.demo.exception.NotFoundException;
 import com.example.demo.model.CarInfo;
 import com.example.demo.repository.CarInfoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class CarInfoService {
@@ -40,14 +40,14 @@ public class CarInfoService {
                 });
     }
 
-    public CarInfo getCarByVin(String vin) {
-        return cache.getCar(vin)
-                .orElseGet(() -> {
-                    CarInfo car = repository.findById(vin)
-                            .orElseThrow(() -> new NotFoundException("Car not found with VIN: " + vin));
-                    cache.putCar(car);
-                    return car;
-                });
+    public Optional<CarInfo> getCarByVin(String vin) {
+        Optional<CarInfo> cachedCar = cache.getCar(vin);
+        if (cachedCar.isPresent()) {
+            return cachedCar;
+        }
+        Optional<CarInfo> dbCar = repository.findById(vin);
+        dbCar.ifPresent(car -> cache.putCar(car));
+        return dbCar;
     }
 
     public CarInfo addCar(CarInfo car) {
@@ -58,23 +58,27 @@ public class CarInfoService {
         return saved;
     }
 
-    public CarInfo updateCar(String vin, CarInfo car) {
+    public Optional<CarInfo> updateCar(String vin, CarInfo car) {
         if (!repository.existsById(vin)) {
-            throw new NotFoundException("Car not found with VIN: " + vin);
+            return Optional.empty();
         }
         car.setVin(vin);
         CarInfo updated = repository.save(car);
         cache.putCar(updated);
         cache.evictAllCarLists();
         cache.evictAllOwnerLists();
-        return updated;
+        return Optional.of(updated);
     }
 
-    public void deleteCar(String vin) {
+    public boolean deleteCar(String vin) {
+        if (!repository.existsById(vin)) {
+            return false;
+        }
         repository.deleteById(vin);
         cache.evictCar(vin);
         cache.evictAllCarLists();
         cache.evictAllOwnerLists();
+        return true;
     }
 
     public List<CarInfo> getAllCars() {

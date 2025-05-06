@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/owners")
@@ -23,7 +24,7 @@ public class OwnerController {
     }
 
     @GetMapping("/{id}")
-    public Owner getById(@PathVariable Long id) {
+    public Optional<Owner> getById(@PathVariable Long id) {
         return ownerService.getOwner(id);
     }
 
@@ -33,7 +34,7 @@ public class OwnerController {
     }
 
     @PutMapping("/{id}")
-    public Owner update(@PathVariable Long id, @RequestBody Owner owner) {
+    public Optional<Owner> update(@PathVariable Long id, @RequestBody Owner owner) {
         return ownerService.updateOwner(id, owner);
     }
 
