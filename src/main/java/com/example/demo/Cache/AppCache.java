@@ -4,19 +4,20 @@ import com.example.demo.model.CarInfo;
 import com.example.demo.model.Owner;
 import org.springframework.stereotype.Component;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Component
 public class AppCache {
-    private final Map<String, CarInfo> carCache = new HashMap<>();
-    private final Map<String, List<CarInfo>> carListCache = new HashMap<>();
-    private final Map<Long, Owner> ownerCache = new HashMap<>();
-    private final Map<String, List<Owner>> ownerListCache = new HashMap<>();
+    private static final int MAX_CACHE_SIZE = 1000;
 
-    // Методы для CarInfo
+    private final Map<String, CarInfo> carCache = new ConcurrentHashMap<>();
+    private final Map<String, List<CarInfo>> carListCache = new ConcurrentHashMap<>();
+    private final Map<Long, Owner> ownerCache = new ConcurrentHashMap<>();
+    private final Map<String, List<Owner>> ownerListCache = new ConcurrentHashMap<>();
+    private final Map<String, Optional<CarInfo>> analyzedTextCache = new ConcurrentHashMap<>();
+
+    // CarInfo methods
     public Optional<CarInfo> getCar(String vin) {
         return Optional.ofNullable(carCache.get(vin));
     }
@@ -41,7 +42,7 @@ public class AppCache {
         carListCache.clear();
     }
 
-    // Методы для Owner
+    // Owner methods
     public Optional<Owner> getOwner(Long id) {
         return Optional.ofNullable(ownerCache.get(id));
     }
@@ -66,11 +67,32 @@ public class AppCache {
         ownerListCache.clear();
     }
 
-    // Общие методы
+    // Text analysis cache methods
+    public Optional<CarInfo> getAnalyzedText(String text) {
+        return analyzedTextCache.getOrDefault(text, Optional.empty());
+    }
+
+    public void putAnalyzedText(String text, Optional<CarInfo> carInfo) {
+        if (analyzedTextCache.size() >= MAX_CACHE_SIZE) {
+            analyzedTextCache.clear();
+        }
+        analyzedTextCache.put(text, carInfo);
+    }
+
+    public void evictAnalyzedText(String text) {
+        analyzedTextCache.remove(text);
+    }
+
+    public void evictAllAnalyzedTexts() {
+        analyzedTextCache.clear();
+    }
+
+    // General methods
     public void clearAll() {
         carCache.clear();
         carListCache.clear();
         ownerCache.clear();
         ownerListCache.clear();
+        analyzedTextCache.clear();
     }
 }

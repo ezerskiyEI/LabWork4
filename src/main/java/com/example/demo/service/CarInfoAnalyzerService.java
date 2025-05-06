@@ -1,6 +1,8 @@
 package com.example.demo.service;
 
+import com.example.demo.Cache.AppCache;
 import com.example.demo.model.CarInfo;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -13,14 +15,32 @@ public class CarInfoAnalyzerService {
     private static final Pattern YEAR_PATTERN = Pattern.compile("\\b(19|20)\\d{2}\\b");
     private static final Pattern MAKE_MODEL_PATTERN = Pattern.compile("(Toyota|Honda|BMW|Audi|Mercedes|Ford|Volkswagen|Chevrolet)\\s+(\\w+)");
 
+    private final AppCache cache;
+
+    @Autowired
+    public CarInfoAnalyzerService(AppCache cache) {
+        this.cache = cache;
+    }
+
     public Optional<CarInfo> analyzeText(String text) {
-        String vin = findVin(text);
-        if (vin == null) {
+        if (text == null || text.isBlank()) {
             return Optional.empty();
         }
 
-        int year = findYear(text);
-        String[] makeModel = findMakeAndModel(text);
+        String normalizedText = text.trim().toUpperCase();
+        Optional<CarInfo> cachedResult = cache.getAnalyzedText(normalizedText);
+        if (cachedResult.isPresent()) {
+            return cachedResult;
+        }
+
+        String vin = findVin(normalizedText);
+        if (vin == null) {
+            cache.putAnalyzedText(normalizedText, Optional.empty());
+            return Optional.empty();
+        }
+
+        int year = findYear(normalizedText);
+        String[] makeModel = findMakeAndModel(normalizedText);
 
         CarInfo carInfo = new CarInfo();
         carInfo.setVin(vin);
@@ -28,7 +48,10 @@ public class CarInfoAnalyzerService {
         carInfo.setModel(makeModel[1]);
         carInfo.setYear(year);
 
-        return Optional.of(carInfo);
+        Optional<CarInfo> result = Optional.of(carInfo);
+        cache.putAnalyzedText(normalizedText, result);
+
+        return result;
     }
 
     private String findVin(String text) {
