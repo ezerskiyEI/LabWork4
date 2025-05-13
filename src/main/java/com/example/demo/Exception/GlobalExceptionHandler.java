@@ -13,32 +13,29 @@ import java.util.Map;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
-    private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Map<String, String>> handleValidationExceptions(MethodArgumentNotValidException ex) {
+    public ResponseEntity<Map<String, String>> handleValidationExceptions(
+            MethodArgumentNotValidException ex) {
         Map<String, String> errors = new HashMap<>();
         ex.getBindingResult().getFieldErrors().forEach(error ->
                 errors.put(error.getField(), error.getDefaultMessage()));
 
-        logger.error("Validation error: {}", errors);
+        log.warn("Validation errors: {}", errors);
         return ResponseEntity.badRequest().body(errors);
-    }
-
-    @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<String> handleIllegalArgument(IllegalArgumentException ex) {
-        logger.error("Illegal argument: {}", ex.getMessage());
-        return ResponseEntity.badRequest().body(ex.getMessage());
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, String>> handleAllExceptions(Exception ex) {
-        logger.error("Internal server error: ", ex);
+        log.error("Internal error occurred: {}", ex.getMessage(), ex);
 
         Map<String, String> response = new HashMap<>();
-        response.put("message", "Internal server error");
-        response.put("error", ex.getMessage());
+        response.put("error", "Internal server error");
+        response.put("message", ex.getMessage());
 
-        return ResponseEntity.internalServerError().body(response);
+        return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(response);
     }
 }

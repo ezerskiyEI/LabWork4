@@ -9,14 +9,14 @@ import org.springframework.stereotype.Component;
 @Aspect
 @Component
 public class LoggingAspect {
-    private final Logger logger = LoggerFactory.getLogger(this.getClass());
+    private final Logger log = LoggerFactory.getLogger(this.getClass());
 
-    @Pointcut("within(com.example.demo.Controller..*) || within(com.example.demo.service..*)")
+    @Pointcut("within(com.example.demo.controller..*) || within(com.example.demo.service..*)")
     public void applicationPackagePointcut() {}
 
     @Before("applicationPackagePointcut()")
     public void logBefore(JoinPoint joinPoint) {
-        logger.info("Entering: {}.{}() with arguments = {}",
+        log.info("Entering method: {}.{}() with args: {}",
                 joinPoint.getSignature().getDeclaringTypeName(),
                 joinPoint.getSignature().getName(),
                 joinPoint.getArgs());
@@ -24,7 +24,7 @@ public class LoggingAspect {
 
     @AfterReturning(pointcut = "applicationPackagePointcut()", returning = "result")
     public void logAfterReturning(JoinPoint joinPoint, Object result) {
-        logger.info("Exiting: {}.{}() with result = {}",
+        log.info("Exiting method: {}.{}() with result: {}",
                 joinPoint.getSignature().getDeclaringTypeName(),
                 joinPoint.getSignature().getName(),
                 result);
@@ -32,9 +32,9 @@ public class LoggingAspect {
 
     @AfterThrowing(pointcut = "applicationPackagePointcut()", throwing = "e")
     public void logAfterThrowing(JoinPoint joinPoint, Throwable e) {
-        logger.error("Exception in {}.{}() with cause = {}",
+        log.error("Exception in {}.{}(): {}",
                 joinPoint.getSignature().getDeclaringTypeName(),
                 joinPoint.getSignature().getName(),
-                e.getCause() != null ? e.getCause() : "NULL");
+                e.getMessage(), e);
     }
 }
