@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 public class LoggingAspect {
     private final Logger log = LoggerFactory.getLogger(this.getClass());
 
-    @Pointcut("within(com.example.demo.controller..*) || within(com.example.demo.service..*)")
+    @Pointcut("within(com.example.demo.Controller..*) || within(com.example.demo.service..*)")
     public void applicationPackagePointcut() {}
 
     @Before("applicationPackagePointcut()")
