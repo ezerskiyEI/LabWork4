@@ -6,42 +6,51 @@
     <property name="charset" value="UTF-8"/>
     <property name="severity" value="error"/>
 
+    <module name="BeforeExecutionExclusionFileFilter">
+        <property name="fileNamePattern" value=".*(Example|Test|Generated)$"/>
+    </module>
+
     <module name="FileTabCharacter"/>
 
-    <!-- Naming conventions -->
-    <module name="ConstantName"/>
-    <module name="LocalFinalVariableName"/>
-    <module name="LocalVariableName"/>
-    <module name="MemberName"/>
-    <module name="MethodName"/>
-    <module name="PackageName"/>
-    <module name="ParameterName"/>
-    <module name="StaticVariableName"/>
-    <module name="TypeName"/>
+    <module name="TreeWalker">
+        <!-- Naming Conventions -->
+        <module name="ConstantName"/>
+        <module name="LocalFinalVariableName"/>
+        <module name="LocalVariableName"/>
+        <module name="MemberName"/>
+        <module name="MethodName"/>
+        <module name="PackageName"/>
+        <module name="ParameterName"/>
+        <module name="StaticVariableName"/>
+        <module name="TypeName"/>
 
-    <!-- Imports -->
-    <module name="AvoidStarImport"/>
-    <module name="IllegalImport"/>
-    <module name="RedundantImport"/>
-    <module name="UnusedImports"/>
+        <!-- Imports -->
+        <module name="AvoidStarImport"/>
+        <module name="IllegalImport"/>
+        <module name="RedundantImport"/>
+        <module name="UnusedImports"/>
 
-    <!-- Formatting -->
-    <module name="Indentation">
-        <property name="basicOffset" value="2"/>
+        <!-- Javadoc -->
+        <module name="JavadocMethod">
+            <property name="scope" value="public"/>
+        </module>
+        <module name="JavadocType"/>
+        <module name="JavadocVariable"/>
+
+        <!-- Formatting -->
+        <module name="Indentation">
+            <property name="basicOffset" value="2"/>
+            <property name="braceAdjustment" value="0"/>
+        </module>
+        <module name="LineLength">
+            <property name="max" value="100"/>
+        </module>
+
+        <!-- Coding -->
+        <module name="EmptyBlock"/>
+        <module name="NeedBraces"/>
+        <module name="LeftCurly"/>
+        <module name="RightCurly"/>
+        <module name="OneStatementPerLine"/>
     </module>
-    <module name="LineLength">
-        <property name="max" value="120"/>
-    </module>
-
-    <!-- Javadoc -->
-    <module name="JavadocMethod"/>
-    <module name="JavadocType"/>
-    <module name="JavadocVariable"/>
-
-    <!-- Coding -->
-    <module name="EmptyBlock"/>
-    <module name="NeedBraces"/>
-    <module name="LeftCurly"/>
-    <module name="RightCurly"/>
-    <module name="OneStatementPerLine"/>
 </module>

@@ -85,18 +85,19 @@
                     </excludes>
                 </configuration>
             </plugin>
-
             <!-- Checkstyle Plugin -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-checkstyle-plugin</artifactId>
                 <version>3.2.0</version>
                 <configuration>
-                    <configLocation>checkstyle.xml</configLocation>
+                    <configLocation>config/checkstyle/google_checks.xml</configLocation>
                     <consoleOutput>true</consoleOutput>
                     <failOnViolation>true</failOnViolation>
-                    <linkXRef>false</linkXRef>
+                    <violationSeverity>error</violationSeverity>
                 </configuration>
+                <dependencies>
+                </dependencies>
                 <executions>
                     <execution>
                         <id>validate</id>
@@ -109,4 +110,3 @@
             </plugin>
         </plugins>
     </build>
-</project>
