@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class CarInfoService {
@@ -50,12 +51,26 @@ public class CarInfoService {
         return dbCar;
     }
 
+    public List<CarInfo> getCarsByVinsBulk(List<String> vins) {
+        return vins.stream()
+                .map(this::getCarByVin)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .collect(Collectors.toList());
+    }
+
     public CarInfo addCar(CarInfo car) {
         CarInfo saved = repository.save(car);
         cache.putCar(saved);
         cache.evictAllCarLists();
         cache.evictAllOwnerLists();
         return saved;
+    }
+
+    public List<CarInfo> addCarsBulk(List<CarInfo> cars) {
+        return cars.stream()
+                .map(this::addCar)
+                .collect(Collectors.toList());
     }
 
     public Optional<CarInfo> updateCar(String vin, CarInfo car) {
@@ -68,6 +83,14 @@ public class CarInfoService {
         cache.evictAllCarLists();
         cache.evictAllOwnerLists();
         return Optional.of(updated);
+    }
+
+    public List<CarInfo> updateCarsBulk(List<CarInfo> cars) {
+        return cars.stream()
+                .map(car -> updateCar(car.getVin(), car))
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .collect(Collectors.toList());
     }
 
     public boolean deleteCar(String vin) {

@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class OwnerService {
@@ -30,10 +31,6 @@ public class OwnerService {
     }
 
     public Optional<Owner> getOwner(Long id) {
-        if (id == null || id <= 0) {
-            return Optional.empty();
-        }
-
         Optional<Owner> cachedOwner = cache.getOwner(id);
         if (cachedOwner.isPresent()) {
             return cachedOwner;
@@ -43,11 +40,26 @@ public class OwnerService {
         return dbOwner;
     }
 
+    public List<Owner> getOwnersByIdsBulk(List<Long> ids) {
+        return ids.stream()
+                .map(this::getOwner)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .collect(Collectors.toList());
+    }
+
     public Owner addOwner(Owner owner) {
         Owner saved = repository.save(owner);
         cache.putOwner(saved);
         cache.evictAllOwnerLists();
+        cache.evictAllCarLists();
         return saved;
+    }
+
+    public List<Owner> addOwnersBulk(List<Owner> owners) {
+        return owners.stream()
+                .map(this::addOwner)
+                .collect(Collectors.toList());
     }
 
     public Optional<Owner> updateOwner(Long id, Owner owner) {
@@ -58,7 +70,16 @@ public class OwnerService {
         Owner updated = repository.save(owner);
         cache.putOwner(updated);
         cache.evictAllOwnerLists();
+        cache.evictAllCarLists();
         return Optional.of(updated);
+    }
+
+    public List<Owner> updateOwnersBulk(List<Owner> owners) {
+        return owners.stream()
+                .map(owner -> updateOwner(owner.getId(), owner))
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .collect(Collectors.toList());
     }
 
     public boolean deleteOwner(Long id) {
@@ -68,16 +89,7 @@ public class OwnerService {
         repository.deleteById(id);
         cache.evictOwner(id);
         cache.evictAllOwnerLists();
+        cache.evictAllCarLists();
         return true;
-    }
-
-    public List<Owner> getOwnersByCarVin(String vin) {
-        String cacheKey = "owners_by_car_" + vin;
-        return cache.getOwnerList(cacheKey)
-                .orElseGet(() -> {
-                    List<Owner> owners = repository.findByCarsVin(vin);
-                    cache.putOwnerList(cacheKey, owners);
-                    return owners;
-                });
     }
 }

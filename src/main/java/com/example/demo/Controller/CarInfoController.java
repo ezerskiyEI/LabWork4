@@ -1,5 +1,6 @@
 package com.example.demo.Controller;
 
+import com.example.demo.dto.BulkOperationRequest;
 import com.example.demo.model.CarInfo;
 import com.example.demo.service.CarInfoAnalyzerService;
 import com.example.demo.service.CarInfoService;
@@ -8,6 +9,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -60,9 +62,27 @@ public class CarInfoController {
     @Operation(summary = "Add a new car")
     @PostMapping
     public ResponseEntity<CarInfo> addCar(
-            @Parameter(description = "Car information to add") @RequestBody CarInfo carInfo) {
+            @Parameter(description = "Car information to add") @Valid @RequestBody CarInfo carInfo) {
         logger.info("Adding new car with VIN: {}", carInfo.getVin());
         return ResponseEntity.ok(carInfoService.addCar(carInfo));
+    }
+
+    @Operation(summary = "Add multiple cars")
+    @PostMapping("/bulk")
+    public ResponseEntity<List<CarInfo>> addCarsBulk(
+            @Parameter(description = "List of cars to add") @Valid @RequestBody List<CarInfo> cars) {
+        logger.info("Adding {} cars in bulk", cars.size());
+        List<CarInfo> result = carInfoService.addCarsBulk(cars);
+        return ResponseEntity.ok(result);
+    }
+
+    @Operation(summary = "Get cars by VINs in bulk")
+    @PostMapping("/bulk-by-vins")
+    public ResponseEntity<List<CarInfo>> getCarsByVinsBulk(
+            @Parameter(description = "List of VINs to retrieve") @Valid @RequestBody BulkOperationRequest request) {
+        logger.info("Retrieving {} cars by VINs in bulk", request.getIdentifiers().size());
+        List<CarInfo> result = carInfoService.getCarsByVinsBulk(request.getIdentifiers());
+        return ResponseEntity.ok(result);
     }
 
     @Operation(summary = "Get car by VIN")
@@ -83,11 +103,20 @@ public class CarInfoController {
     @PutMapping("/{vin}")
     public ResponseEntity<CarInfo> updateCar(
             @Parameter(description = "VIN of the car to update") @PathVariable String vin,
-            @Parameter(description = "Updated car information") @RequestBody CarInfo carInfo) {
+            @Parameter(description = "Updated car information") @Valid @RequestBody CarInfo carInfo) {
         logger.info("Updating car with VIN: {}", vin);
         return carInfoService.updateCar(vin, carInfo)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
+    }
+
+    @Operation(summary = "Update multiple cars")
+    @PutMapping("/bulk")
+    public ResponseEntity<List<CarInfo>> updateCarsBulk(
+            @Parameter(description = "List of cars to update") @Valid @RequestBody List<CarInfo> cars) {
+        logger.info("Updating {} cars in bulk", cars.size());
+        List<CarInfo> result = carInfoService.updateCarsBulk(cars);
+        return ResponseEntity.ok(result);
     }
 
     @Operation(summary = "Delete a car")
