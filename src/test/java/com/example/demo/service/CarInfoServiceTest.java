@@ -4,6 +4,7 @@ import com.example.demo.Cache.AppCache;
 import com.example.demo.model.CarInfo;
 import com.example.demo.repository.CarInfoRepository;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -30,19 +31,21 @@ class CarInfoServiceTest {
     @InjectMocks
     private CarInfoService carInfoService;
 
+    @Mock
     private CarInfo car;
+
+    @Mock
+    private CarInfo car2;
 
     @BeforeEach
     void setUp() {
-        car = new CarInfo();
-        car.setVin("1HGCM82633A004352");
-        car.setMake("Honda");
-        car.setModel("Accord");
-        car.setYear(2003);
+        when(car.getVin()).thenReturn("1HGCM82633A004352");
+        when(car2.getVin()).thenReturn("2HGCM82633A004353");
     }
 
     @Test
-    void findByYearAndMake_fromCache() {
+    @DisplayName("Should return cars from cache when finding by year and make")
+    void shouldReturnCarsFromCacheWhenFindByYearAndMake() {
         List<CarInfo> cars = Arrays.asList(car);
         when(cache.getCarList("cars_by_year_2003_make_Honda")).thenReturn(Optional.of(cars));
 
@@ -53,7 +56,8 @@ class CarInfoServiceTest {
     }
 
     @Test
-    void findByYearAndMake_fromRepository() {
+    @DisplayName("Should return cars from repository when cache is empty for year and make")
+    void shouldReturnCarsFromRepositoryWhenCacheEmptyForYearAndMake() {
         List<CarInfo> cars = Arrays.asList(car);
         when(cache.getCarList("cars_by_year_2003_make_Honda")).thenReturn(Optional.empty());
         when(repository.findByYearAndMake(2003, "Honda")).thenReturn(cars);
@@ -65,7 +69,8 @@ class CarInfoServiceTest {
     }
 
     @Test
-    void findByOwnerId_fromCache() {
+    @DisplayName("Should return cars from cache when finding by owner ID")
+    void shouldReturnCarsFromCacheWhenFindByOwnerId() {
         List<CarInfo> cars = Arrays.asList(car);
         when(cache.getCarList("cars_by_owner_1")).thenReturn(Optional.of(cars));
 
@@ -76,7 +81,8 @@ class CarInfoServiceTest {
     }
 
     @Test
-    void findByOwnerId_fromRepository() {
+    @DisplayName("Should return cars from repository when cache is empty for owner ID")
+    void shouldReturnCarsFromRepositoryWhenCacheEmptyForOwnerId() {
         List<CarInfo> cars = Arrays.asList(car);
         when(cache.getCarList("cars_by_owner_1")).thenReturn(Optional.empty());
         when(repository.findByOwnerId(1L)).thenReturn(cars);
@@ -88,7 +94,8 @@ class CarInfoServiceTest {
     }
 
     @Test
-    void getCarByVin_fromCache() {
+    @DisplayName("Should return car from cache when getting by VIN")
+    void shouldReturnCarFromCacheWhenGetByVin() {
         when(cache.getCar("1HGCM82633A004352")).thenReturn(Optional.of(car));
 
         Optional<CarInfo> result = carInfoService.getCarByVin("1HGCM82633A004352");
@@ -99,7 +106,8 @@ class CarInfoServiceTest {
     }
 
     @Test
-    void getCarByVin_fromRepository() {
+    @DisplayName("Should return car from repository when cache is empty for VIN")
+    void shouldReturnCarFromRepositoryWhenCacheEmptyForVin() {
         when(cache.getCar("1HGCM82633A004352")).thenReturn(Optional.empty());
         when(repository.findById("1HGCM82633A004352")).thenReturn(Optional.of(car));
 
@@ -111,9 +119,8 @@ class CarInfoServiceTest {
     }
 
     @Test
-    void getCarsByVinsBulk() {
-        CarInfo car2 = new CarInfo();
-        car2.setVin("2HGCM82633A004353");
+    @DisplayName("Should return cars by VINs in bulk")
+    void shouldReturnCarsByVinsBulk() {
         List<String> vins = Arrays.asList("1HGCM82633A004352", "2HGCM82633A004353");
         when(cache.getCar("1HGCM82633A004352")).thenReturn(Optional.of(car));
         when(cache.getCar("2HGCM82633A004353")).thenReturn(Optional.empty());
@@ -122,11 +129,13 @@ class CarInfoServiceTest {
         List<CarInfo> result = carInfoService.getCarsByVinsBulk(vins);
 
         assertEquals(2, result.size());
+        assertTrue(result.containsAll(Arrays.asList(car, car2)));
         verify(cache).putCar(car2);
     }
 
     @Test
-    void addCar() {
+    @DisplayName("Should add car and update cache")
+    void shouldAddCarAndUpdateCache() {
         when(repository.save(car)).thenReturn(car);
 
         CarInfo result = carInfoService.addCar(car);
@@ -138,9 +147,8 @@ class CarInfoServiceTest {
     }
 
     @Test
-    void addCarsBulk() {
-        CarInfo car2 = new CarInfo();
-        car2.setVin("2HGCM82633A004353");
+    @DisplayName("Should add multiple cars in bulk")
+    void shouldAddCarsBulk() {
         List<CarInfo> cars = Arrays.asList(car, car2);
         when(repository.save(car)).thenReturn(car);
         when(repository.save(car2)).thenReturn(car2);
@@ -149,10 +157,13 @@ class CarInfoServiceTest {
 
         assertEquals(2, result.size());
         verify(cache, times(2)).putCar(any(CarInfo.class));
+        verify(cache, times(2)).evictAllCarLists();
+        verify(cache, times(2)).evictAllOwnerLists();
     }
 
     @Test
-    void updateCar_exists() {
+    @DisplayName("Should update car when it exists")
+    void shouldUpdateCarWhenExists() {
         when(repository.existsById("1HGCM82633A004352")).thenReturn(true);
         when(repository.save(car)).thenReturn(car);
 
@@ -166,18 +177,19 @@ class CarInfoServiceTest {
     }
 
     @Test
-    void updateCar_notExists() {
+    @DisplayName("Should return empty when updating non-existing car")
+    void shouldReturnEmptyWhenUpdatingNonExistingCar() {
         when(repository.existsById("1HGCM82633A004352")).thenReturn(false);
 
         Optional<CarInfo> result = carInfoService.updateCar("1HGCM82633A004352", car);
 
         assertFalse(result.isPresent());
+        verify(repository, never()).save(any());
     }
 
     @Test
-    void updateCarsBulk() {
-        CarInfo car2 = new CarInfo();
-        car2.setVin("2HGCM82633A004353");
+    @DisplayName("Should update multiple cars in bulk")
+    void shouldUpdateCarsBulk() {
         List<CarInfo> cars = Arrays.asList(car, car2);
         when(repository.existsById("1HGCM82633A004352")).thenReturn(true);
         when(repository.existsById("2HGCM82633A004353")).thenReturn(true);
@@ -188,10 +200,13 @@ class CarInfoServiceTest {
 
         assertEquals(2, result.size());
         verify(cache, times(2)).putCar(any(CarInfo.class));
+        verify(cache, times(2)).evictAllCarLists();
+        verify(cache, times(2)).evictAllOwnerLists();
     }
 
     @Test
-    void deleteCar_exists() {
+    @DisplayName("Should delete car when it exists")
+    void shouldDeleteCarWhenExists() {
         when(repository.existsById("1HGCM82633A004352")).thenReturn(true);
 
         boolean result = carInfoService.deleteCar("1HGCM82633A004352");
@@ -199,10 +214,13 @@ class CarInfoServiceTest {
         assertTrue(result);
         verify(repository).deleteById("1HGCM82633A004352");
         verify(cache).evictCar("1HGCM82633A004352");
+        verify(cache).evictAllCarLists();
+        verify(cache).evictAllOwnerLists();
     }
 
     @Test
-    void deleteCar_notExists() {
+    @DisplayName("Should return false when deleting non-existing car")
+    void shouldReturnFalseWhenDeletingNonExistingCar() {
         when(repository.existsById("1HGCM82633A004352")).thenReturn(false);
 
         boolean result = carInfoService.deleteCar("1HGCM82633A004352");
@@ -212,7 +230,8 @@ class CarInfoServiceTest {
     }
 
     @Test
-    void getAllCars_fromCache() {
+    @DisplayName("Should return all cars from cache")
+    void shouldReturnAllCarsFromCache() {
         List<CarInfo> cars = Arrays.asList(car);
         when(cache.getCarList("all_cars")).thenReturn(Optional.of(cars));
 
@@ -223,7 +242,8 @@ class CarInfoServiceTest {
     }
 
     @Test
-    void getAllCars_fromRepository() {
+    @DisplayName("Should return all cars from repository when cache is empty")
+    void shouldReturnAllCarsFromRepositoryWhenCacheEmpty() {
         List<CarInfo> cars = Arrays.asList(car);
         when(cache.getCarList("all_cars")).thenReturn(Optional.empty());
         when(repository.findAll()).thenReturn(cars);

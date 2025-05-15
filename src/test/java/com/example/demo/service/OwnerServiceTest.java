@@ -4,6 +4,7 @@ import com.example.demo.Cache.AppCache;
 import com.example.demo.model.Owner;
 import com.example.demo.repository.OwnerRepository;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -30,17 +31,23 @@ class OwnerServiceTest {
     @InjectMocks
     private OwnerService ownerService;
 
+    @Mock
     private Owner owner;
+
+    @Mock
+    private Owner owner2;
 
     @BeforeEach
     void setUp() {
-        owner = new Owner();
-        owner.setId(1L);
-        owner.setName("John Doe");
+        when(owner.getId()).thenReturn(1L);
+        when(owner.getName()).thenReturn("John Doe");
+        when(owner2.getId()).thenReturn(2L);
+        when(owner2.getName()).thenReturn("Jane Doe");
     }
 
     @Test
-    void getAllOwners_fromCache() {
+    @DisplayName("Should return all owners from cache")
+    void shouldReturnAllOwnersFromCache() {
         List<Owner> owners = Arrays.asList(owner);
         when(cache.getOwnerList("all_owners")).thenReturn(Optional.of(owners));
 
@@ -51,7 +58,8 @@ class OwnerServiceTest {
     }
 
     @Test
-    void getAllOwners_fromRepository() {
+    @DisplayName("Should return all owners from repository when cache is empty")
+    void shouldReturnAllOwnersFromRepositoryWhenCacheEmpty() {
         List<Owner> owners = Arrays.asList(owner);
         when(cache.getOwnerList("all_owners")).thenReturn(Optional.empty());
         when(repository.findAll()).thenReturn(owners);
@@ -63,7 +71,8 @@ class OwnerServiceTest {
     }
 
     @Test
-    void getOwner_fromCache() {
+    @DisplayName("Should return owner from cache when getting by ID")
+    void shouldReturnOwnerFromCacheWhenGetById() {
         when(cache.getOwner(1L)).thenReturn(Optional.of(owner));
 
         Optional<Owner> result = ownerService.getOwner(1L);
@@ -74,7 +83,8 @@ class OwnerServiceTest {
     }
 
     @Test
-    void getOwner_fromRepository() {
+    @DisplayName("Should return owner from repository when cache is empty for ID")
+    void shouldReturnOwnerFromRepositoryWhenCacheEmptyForId() {
         when(cache.getOwner(1L)).thenReturn(Optional.empty());
         when(repository.findById(1L)).thenReturn(Optional.of(owner));
 
@@ -86,9 +96,8 @@ class OwnerServiceTest {
     }
 
     @Test
-    void getOwnersByIdsBulk() {
-        Owner owner2 = new Owner();
-        owner2.setId(2L);
+    @DisplayName("Should return owners by IDs in bulk")
+    void shouldReturnOwnersByIdsBulk() {
         List<Long> ids = Arrays.asList(1L, 2L);
         when(cache.getOwner(1L)).thenReturn(Optional.of(owner));
         when(cache.getOwner(2L)).thenReturn(Optional.empty());
@@ -97,11 +106,13 @@ class OwnerServiceTest {
         List<Owner> result = ownerService.getOwnersByIdsBulk(ids);
 
         assertEquals(2, result.size());
+        assertTrue(result.containsAll(Arrays.asList(owner, owner2)));
         verify(cache).putOwner(owner2);
     }
 
     @Test
-    void addOwner() {
+    @DisplayName("Should add owner and update cache")
+    void shouldAddOwnerAndUpdateCache() {
         when(repository.save(owner)).thenReturn(owner);
 
         Owner result = ownerService.addOwner(owner);
@@ -113,9 +124,8 @@ class OwnerServiceTest {
     }
 
     @Test
-    void addOwnersBulk() {
-        Owner owner2 = new Owner();
-        owner2.setId(2L);
+    @DisplayName("Should add multiple owners in bulk")
+    void shouldAddOwnersBulk() {
         List<Owner> owners = Arrays.asList(owner, owner2);
         when(repository.save(owner)).thenReturn(owner);
         when(repository.save(owner2)).thenReturn(owner2);
@@ -124,10 +134,13 @@ class OwnerServiceTest {
 
         assertEquals(2, result.size());
         verify(cache, times(2)).putOwner(any(Owner.class));
+        verify(cache, times(2)).evictAllOwnerLists();
+        verify(cache, times(2)).evictAllCarLists();
     }
 
     @Test
-    void updateOwner_exists() {
+    @DisplayName("Should update owner when it exists")
+    void shouldUpdateOwnerWhenExists() {
         when(repository.existsById(1L)).thenReturn(true);
         when(repository.save(owner)).thenReturn(owner);
 
@@ -141,18 +154,19 @@ class OwnerServiceTest {
     }
 
     @Test
-    void updateOwner_notExists() {
+    @DisplayName("Should return empty when updating non-existing owner")
+    void shouldReturnEmptyWhenUpdatingNonExistingOwner() {
         when(repository.existsById(1L)).thenReturn(false);
 
         Optional<Owner> result = ownerService.updateOwner(1L, owner);
 
         assertFalse(result.isPresent());
+        verify(repository, never()).save(any());
     }
 
     @Test
-    void updateOwnersBulk() {
-        Owner owner2 = new Owner();
-        owner2.setId(2L);
+    @DisplayName("Should update multiple owners in bulk")
+    void shouldUpdateOwnersBulk() {
         List<Owner> owners = Arrays.asList(owner, owner2);
         when(repository.existsById(1L)).thenReturn(true);
         when(repository.existsById(2L)).thenReturn(true);
@@ -163,10 +177,13 @@ class OwnerServiceTest {
 
         assertEquals(2, result.size());
         verify(cache, times(2)).putOwner(any(Owner.class));
+        verify(cache, times(2)).evictAllOwnerLists();
+        verify(cache, times(2)).evictAllCarLists();
     }
 
     @Test
-    void deleteOwner_exists() {
+    @DisplayName("Should delete owner when it exists")
+    void shouldDeleteOwnerWhenExists() {
         when(repository.existsById(1L)).thenReturn(true);
 
         boolean result = ownerService.deleteOwner(1L);
@@ -174,10 +191,13 @@ class OwnerServiceTest {
         assertTrue(result);
         verify(repository).deleteById(1L);
         verify(cache).evictOwner(1L);
+        verify(cache).evictAllOwnerLists();
+        verify(cache).evictAllCarLists();
     }
 
     @Test
-    void deleteOwner_notExists() {
+    @DisplayName("Should return false when deleting non-existing owner")
+    void shouldReturnFalseWhenDeletingNonExistingOwner() {
         when(repository.existsById(1L)).thenReturn(false);
 
         boolean result = ownerService.deleteOwner(1L);
