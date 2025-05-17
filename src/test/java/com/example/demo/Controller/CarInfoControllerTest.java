@@ -1,122 +1,257 @@
 package com.example.demo.Controller;
 
+
+import com.example.demo.dto.BulkOperationRequest;
 import com.example.demo.model.CarInfo;
 import com.example.demo.service.CarInfoAnalyzerService;
 import com.example.demo.service.CarInfoService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(CarInfoController.class)
-public class CarInfoControllerTest {
+@ExtendWith(MockitoExtension.class)
+class CarInfoControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
-
-    @MockBean
+    @Mock
     private CarInfoService carInfoService;
 
-    @MockBean
+    @Mock
     private CarInfoAnalyzerService analyzerService;
 
-    private CarInfo carInfo;
+    @InjectMocks
+    private CarInfoController carInfoController;
+
+    private MockMvc mockMvc;
+
+    @Mock
+    private CarInfo car;
+
+    @Mock
+    private CarInfo car2;
+
+    @Mock
+    private BulkOperationRequest bulkRequest;
+
+    private ObjectMapper objectMapper;
 
     @BeforeEach
     void setUp() {
-        carInfo = new CarInfo();
-        carInfo.setVin("1HGCM82633A004352");
-        carInfo.setMake("Honda");
-        carInfo.setModel("Accord");
-        carInfo.setYear(2003);
+        mockMvc = MockMvcBuilders.standaloneSetup(carInfoController).build();
+        objectMapper = new ObjectMapper();
+        when(car.getVin()).thenReturn("1HGCM82633A004352");
+        when(car2.getVin()).thenReturn("2HGCM82633A004353");
     }
 
     @Test
-    void testAnalyzeText_Success() throws Exception {
-        when(analyzerService.analyzeText("Honda Accord 2003 1HGCM82633A004352"))
-                .thenReturn(Optional.of(carInfo));
+    @DisplayName("Should return all cars when getting all cars")
+    void shouldReturnAllCarsWhenGettingAllCars() throws Exception {
+        List<CarInfo> cars = Arrays.asList(car, car2);
+        when(carInfoService.getAllCars()).thenReturn(cars);
 
-        mockMvc.perform(get("/api/cars/analyze")
-                        .param("text", "Honda Accord 2003 1HGCM82633A004352"))
+        mockMvc.perform(get("/api/cars"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.vin").value("1HGCM82633A004352"));
+                .andExpect(jsonPath("$.length()").value(2));
+
+        verify(carInfoService).getAllCars();
     }
 
     @Test
-    void testAnalyzeText_Failure() throws Exception {
-        when(analyzerService.analyzeText("Invalid text")).thenReturn(Optional.empty());
+    @DisplayName("Should return car when getting by VIN")
+    void shouldReturnCarWhenGettingByVin() throws Exception {
+        when(carInfoService.getCarByVin("1HGCM82633A004352")).thenReturn(Optional.of(car));
 
-        mockMvc.perform(get("/api/cars/analyze")
-                        .param("text", "Invalid text"))
-                .andExpect(status().isBadRequest());
+        mockMvc.perform(get("/api/cars/1HGCM82633A004352"))
+                .andExpect(status().isOk());
+
+        verify(carInfoService).getCarByVin("1HGCM82633A004352");
     }
 
     @Test
-    void testGetCarsByYearAndMake() throws Exception {
-        when(carInfoService.findByYearAndMake(2003, "Honda"))
-                .thenReturn(Collections.singletonList(carInfo));
+    @DisplayName("Should return not found when getting non-existing car by VIN")
+    void shouldReturnNotFoundWhenGettingNonExistingCarByVin() throws Exception {
+        when(carInfoService.getCarByVin("INVALID_VIN")).thenReturn(Optional.empty());
+
+        mockMvc.perform(get("/api/cars/INVALID_VIN"))
+                .andExpect(status().isNotFound());
+
+        verify(carInfoService).getCarByVin("INVALID_VIN");
+    }
+
+    @Test
+    @DisplayName("Should return cars when getting by year and make")
+    void shouldReturnCarsWhenGettingByYearAndMake() throws Exception {
+        List<CarInfo> cars = Arrays.asList(car);
+        when(carInfoService.findByYearAndMake(2003, "Honda")).thenReturn(cars);
 
         mockMvc.perform(get("/api/cars/by-year-and-make")
                         .param("year", "2003")
                         .param("make", "Honda"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].vin").value("1HGCM82633A004352"));
+                .andExpect(jsonPath("$.length()").value(1));
+
+        verify(carInfoService).findByYearAndMake(2003, "Honda");
     }
 
     @Test
-    void testAddCar() throws Exception {
-        when(carInfoService.addCar(any(CarInfo.class))).thenReturn(carInfo);
+    @DisplayName("Should return cars when getting by owner ID")
+    void shouldReturnCarsWhenGettingByOwnerId() throws Exception {
+        List<CarInfo> cars = Arrays.asList(car);
+        when(carInfoService.findByOwnerId(1L)).thenReturn(cars);
+
+        mockMvc.perform(get("/api/cars/by-owner/1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1));
+
+        verify(carInfoService).findByOwnerId(1L);
+    }
+
+    @Test
+    @DisplayName("Should return car when analyzing valid text")
+    void shouldReturnCarWhenAnalyzingValidText() throws Exception {
+        when(analyzerService.analyzeText("Honda Accord 2003 1HGCM82633A004352")).thenReturn(Optional.of(car));
+
+        mockMvc.perform(get("/api/cars/analyze")
+                        .param("text", "Honda Accord 2003 1HGCM82633A004352"))
+                .andExpect(status().isOk());
+
+        verify(analyzerService).analyzeText("Honda Accord 2003 1HGCM82633A004352");
+    }
+
+    @Test
+    @DisplayName("Should return bad request when analyzing invalid text")
+    void shouldReturnBadRequestWhenAnalyzingInvalidText() throws Exception {
+        when(analyzerService.analyzeText("invalid")).thenReturn(Optional.empty());
+
+        mockMvc.perform(get("/api/cars/analyze")
+                        .param("text", "invalid"))
+                .andExpect(status().isBadRequest());
+
+        verify(analyzerService).analyzeText("invalid");
+    }
+
+    @Test
+    @DisplayName("Should add car when posting valid car")
+    void shouldAddCarWhenPostingValidCar() throws Exception {
+        when(carInfoService.addCar(any(CarInfo.class))).thenReturn(car);
 
         mockMvc.perform(post("/api/cars")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"vin\":\"1HGCM82633A004352\",\"make\":\"Honda\",\"model\":\"Accord\",\"year\":2003}"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.vin").value("1HGCM82633A004352"));
+                        .content(objectMapper.writeValueAsString(car)))
+                .andExpect(status().isOk());
+
+        verify(carInfoService).addCar(any(CarInfo.class));
     }
 
     @Test
-    void testBulkOperations() throws Exception {
-        when(carInfoService.addCar(any(CarInfo.class))).thenReturn(carInfo);
-        when(carInfoService.updateCar(eq("1HGCM82633A004352"), any(CarInfo.class)))
-                .thenReturn(Optional.of(carInfo));
-        doNothing().when(carInfoService).deleteCar("1HGCM82633A004352");
+    @DisplayName("Should add multiple cars when posting bulk")
+    void shouldAddCarsWhenPostingBulk() throws Exception {
+        List<CarInfo> cars = Arrays.asList(car, car2);
+        when(carInfoService.addCarsBulk(anyList())).thenReturn(cars);
 
-        String requestBody = "[{\"action\":\"add\",\"carInfo\":{\"vin\":\"1HGCM82633A004352\",\"make\":\"Honda\",\"model\":\"Accord\",\"year\":2003}}," +
-                "{\"action\":\"update\",\"carInfo\":{\"vin\":\"1HGCM82633A004352\",\"make\":\"Honda\",\"model\":\"Accord\",\"year\":2004}}," +
-                "{\"action\":\"delete\",\"carInfo\":{\"vin\":\"1HGCM82633A004352\",\"make\":\"Honda\",\"model\":\"Accord\",\"year\":2003}}]";
-
-        mockMvc.perform(post("/api/cars/bulk-operations")
+        mockMvc.perform(post("/api/cars/bulk")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(requestBody))
+                        .content(objectMapper.writeValueAsString(cars)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isArray())
-                .andExpect(jsonPath("$").isNotEmpty());
+                .andExpect(jsonPath("$.length()").value(2));
+
+        verify(carInfoService).addCarsBulk(anyList());
     }
 
     @Test
-    void testGetCarByVin_Success() throws Exception {
-        when(carInfoService.getCarByVin("1HGCM82633A004352")).thenReturn(Optional.of(carInfo));
+    @DisplayName("Should return cars when posting bulk VINs")
+    void shouldReturnCarsWhenPostingBulkVins() throws Exception {
+        List<String> vins = Arrays.asList("1HGCM82633A004352", "2HGCM82633A004353");
+        List<CarInfo> cars = Arrays.asList(car, car2);
+        when(bulkRequest.getIdentifiers()).thenReturn(vins);
+        when(carInfoService.getCarsByVinsBulk(vins)).thenReturn(cars);
 
-        mockMvc.perform(get("/api/cars/1HGCM82633A004352"))
+        mockMvc.perform(post("/api/cars/bulk-by-vins")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(bulkRequest)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.vin").value("1HGCM82633A004352"));
+                .andExpect(jsonPath("$.length()").value(2));
+
+        verify(carInfoService).getCarsByVinsBulk(vins);
     }
 
     @Test
-    void testGetCarByVin_NotFound() throws Exception {
-        when(carInfoService.getCarByVin("1HGCM82633A004352")).thenReturn(Optional.empty());
+    @DisplayName("Should update car when putting valid car")
+    void shouldUpdateCarWhenPuttingValidCar() throws Exception {
+        when(carInfoService.updateCar(eq("1HGCM82633A004352"), any(CarInfo.class))).thenReturn(Optional.of(car));
 
-        mockMvc.perform(get("/api/cars/1HGCM82633A004352"))
+        mockMvc.perform(put("/api/cars/1HGCM82633A004352")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(car)))
+                .andExpect(status().isOk());
+
+        verify(carInfoService).updateCar(eq("1HGCM82633A004352"), any(CarInfo.class));
+    }
+
+    @Test
+    @DisplayName("Should return not found when updating non-existing car")
+    void shouldReturnNotFoundWhenUpdatingNonExistingCar() throws Exception {
+        when(carInfoService.updateCar(eq("INVALID_VIN"), any(CarInfo.class))).thenReturn(Optional.empty());
+
+        mockMvc.perform(put("/api/cars/INVALID_VIN")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(car)))
                 .andExpect(status().isNotFound());
+
+        verify(carInfoService).updateCar(eq("INVALID_VIN"), any(CarInfo.class));
+    }
+
+    @Test
+    @DisplayName("Should update multiple cars when putting bulk")
+    void shouldUpdateCarsWhenPuttingBulk() throws Exception {
+        List<CarInfo> cars = Arrays.asList(car, car2);
+        when(carInfoService.updateCarsBulk(anyList())).thenReturn(cars);
+
+        mockMvc.perform(put("/api/cars/bulk")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(cars)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2));
+
+        verify(carInfoService).updateCarsBulk(anyList());
+    }
+
+    @Test
+    @DisplayName("Should delete car when deleting existing car")
+    void shouldDeleteCarWhenDeletingExistingCar() throws Exception {
+        when(carInfoService.deleteCar("1HGCM82633A004352")).thenReturn(true);
+
+        mockMvc.perform(delete("/api/cars/1HGCM82633A004352"))
+                .andExpect(status().isNoContent());
+
+        verify(carInfoService).deleteCar("1HGCM82633A004352");
+    }
+
+    @Test
+    @DisplayName("Should return not found when deleting non-existing car")
+    void shouldReturnNotFoundWhenDeletingNonExistingCar() throws Exception {
+        when(carInfoService.deleteCar("INVALID_VIN")).thenReturn(false);
+
+        mockMvc.perform(delete("/api/cars/INVALID_VIN"))
+                .andExpect(status().isNotFound());
+
+        verify(carInfoService).deleteCar("INVALID_VIN");
     }
 }
