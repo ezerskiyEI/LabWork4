@@ -3,6 +3,7 @@ package com.example.demo.Controller;
 import com.example.demo.dto.BulkOperationRequest;
 import com.example.demo.model.Owner;
 import com.example.demo.service.OwnerService;
+import com.example.demo.service.RequestCounterService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -30,6 +31,9 @@ class OwnerControllerTest {
 
     @Mock
     private OwnerService ownerService;
+
+    @Mock
+    private RequestCounterService counterService;
 
     @InjectMocks
     private OwnerController ownerController;
@@ -66,6 +70,7 @@ class OwnerControllerTest {
                 .andExpect(jsonPath("$.length()").value(2));
 
         verify(ownerService).getAllOwners();
+        verify(counterService).increment();
     }
 
     @Test
@@ -77,6 +82,7 @@ class OwnerControllerTest {
                 .andExpect(status().isOk());
 
         verify(ownerService).getOwner(1L);
+        verify(counterService).increment();
     }
 
     @Test
@@ -88,6 +94,7 @@ class OwnerControllerTest {
                 .andExpect(status().isNotFound());
 
         verify(ownerService).getOwner(999L);
+        verify(counterService).increment();
     }
 
     @Test
@@ -101,6 +108,7 @@ class OwnerControllerTest {
                 .andExpect(status().isOk());
 
         verify(ownerService).addOwner(any(Owner.class));
+        verify(counterService).increment();
     }
 
     @Test
@@ -116,6 +124,7 @@ class OwnerControllerTest {
                 .andExpect(jsonPath("$.length()").value(2));
 
         verify(ownerService).addOwnersBulk(anyList());
+        verify(counterService).increment();
     }
 
     @Test
@@ -134,6 +143,7 @@ class OwnerControllerTest {
                 .andExpect(jsonPath("$.length()").value(2));
 
         verify(ownerService).getOwnersByIdsBulk(longIds);
+        verify(counterService).increment();
     }
 
     @Test
@@ -148,6 +158,7 @@ class OwnerControllerTest {
                 .andExpect(status().isBadRequest());
 
         verify(ownerService, never()).getOwnersByIdsBulk(anyList());
+        verify(counterService).increment();
     }
 
     @Test
@@ -161,6 +172,7 @@ class OwnerControllerTest {
                 .andExpect(status().isOk());
 
         verify(ownerService).updateOwner(eq(1L), any(Owner.class));
+        verify(counterService).increment();
     }
 
     @Test
@@ -174,6 +186,7 @@ class OwnerControllerTest {
                 .andExpect(status().isNotFound());
 
         verify(ownerService).updateOwner(eq(999L), any(Owner.class));
+        verify(counterService).increment();
     }
 
     @Test
@@ -189,6 +202,7 @@ class OwnerControllerTest {
                 .andExpect(jsonPath("$.length()").value(2));
 
         verify(ownerService).updateOwnersBulk(anyList());
+        verify(counterService).increment();
     }
 
     @Test
@@ -200,6 +214,7 @@ class OwnerControllerTest {
                 .andExpect(status().isNoContent());
 
         verify(ownerService).deleteOwner(1L);
+        verify(counterService).increment();
     }
 
     @Test
@@ -211,5 +226,6 @@ class OwnerControllerTest {
                 .andExpect(status().isNotFound());
 
         verify(ownerService).deleteOwner(999L);
+        verify(counterService).increment();
     }
 }

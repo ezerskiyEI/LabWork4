@@ -1,10 +1,10 @@
 package com.example.demo.Controller;
 
-
 import com.example.demo.dto.BulkOperationRequest;
 import com.example.demo.model.CarInfo;
 import com.example.demo.service.CarInfoAnalyzerService;
 import com.example.demo.service.CarInfoService;
+import com.example.demo.service.RequestCounterService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -35,6 +35,9 @@ class CarInfoControllerTest {
 
     @Mock
     private CarInfoAnalyzerService analyzerService;
+
+    @Mock
+    private RequestCounterService counterService;
 
     @InjectMocks
     private CarInfoController carInfoController;
@@ -71,6 +74,7 @@ class CarInfoControllerTest {
                 .andExpect(jsonPath("$.length()").value(2));
 
         verify(carInfoService).getAllCars();
+        verify(counterService).increment();
     }
 
     @Test
@@ -82,6 +86,7 @@ class CarInfoControllerTest {
                 .andExpect(status().isOk());
 
         verify(carInfoService).getCarByVin("1HGCM82633A004352");
+        verify(counterService).increment();
     }
 
     @Test
@@ -93,6 +98,7 @@ class CarInfoControllerTest {
                 .andExpect(status().isNotFound());
 
         verify(carInfoService).getCarByVin("INVALID_VIN");
+        verify(counterService).increment();
     }
 
     @Test
@@ -108,6 +114,7 @@ class CarInfoControllerTest {
                 .andExpect(jsonPath("$.length()").value(1));
 
         verify(carInfoService).findByYearAndMake(2003, "Honda");
+        verify(counterService).increment();
     }
 
     @Test
@@ -121,6 +128,7 @@ class CarInfoControllerTest {
                 .andExpect(jsonPath("$.length()").value(1));
 
         verify(carInfoService).findByOwnerId(1L);
+        verify(counterService).increment();
     }
 
     @Test
@@ -133,6 +141,7 @@ class CarInfoControllerTest {
                 .andExpect(status().isOk());
 
         verify(analyzerService).analyzeText("Honda Accord 2003 1HGCM82633A004352");
+        verify(counterService).increment();
     }
 
     @Test
@@ -145,6 +154,7 @@ class CarInfoControllerTest {
                 .andExpect(status().isBadRequest());
 
         verify(analyzerService).analyzeText("invalid");
+        verify(counterService).increment();
     }
 
     @Test
@@ -158,6 +168,7 @@ class CarInfoControllerTest {
                 .andExpect(status().isOk());
 
         verify(carInfoService).addCar(any(CarInfo.class));
+        verify(counterService).increment();
     }
 
     @Test
@@ -173,6 +184,7 @@ class CarInfoControllerTest {
                 .andExpect(jsonPath("$.length()").value(2));
 
         verify(carInfoService).addCarsBulk(anyList());
+        verify(counterService).increment();
     }
 
     @Test
@@ -190,6 +202,7 @@ class CarInfoControllerTest {
                 .andExpect(jsonPath("$.length()").value(2));
 
         verify(carInfoService).getCarsByVinsBulk(vins);
+        verify(counterService).increment();
     }
 
     @Test
@@ -203,6 +216,7 @@ class CarInfoControllerTest {
                 .andExpect(status().isOk());
 
         verify(carInfoService).updateCar(eq("1HGCM82633A004352"), any(CarInfo.class));
+        verify(counterService).increment();
     }
 
     @Test
@@ -216,6 +230,7 @@ class CarInfoControllerTest {
                 .andExpect(status().isNotFound());
 
         verify(carInfoService).updateCar(eq("INVALID_VIN"), any(CarInfo.class));
+        verify(counterService).increment();
     }
 
     @Test
@@ -231,6 +246,7 @@ class CarInfoControllerTest {
                 .andExpect(jsonPath("$.length()").value(2));
 
         verify(carInfoService).updateCarsBulk(anyList());
+        verify(counterService).increment();
     }
 
     @Test
@@ -242,6 +258,7 @@ class CarInfoControllerTest {
                 .andExpect(status().isNoContent());
 
         verify(carInfoService).deleteCar("1HGCM82633A004352");
+        verify(counterService).increment();
     }
 
     @Test
@@ -253,5 +270,6 @@ class CarInfoControllerTest {
                 .andExpect(status().isNotFound());
 
         verify(carInfoService).deleteCar("INVALID_VIN");
+        verify(counterService).increment();
     }
 }
