@@ -13,7 +13,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -22,18 +21,56 @@ class CarInfoAnalyzerServiceTest {
     @Mock
     private AppCache cache;
 
+    @Mock
+    private RequestCounterService counterService;
+
     @InjectMocks
     private CarInfoAnalyzerService analyzerService;
 
-    @Mock
-    private CarInfo car;
-
     @BeforeEach
     void setUp() {
-        when(car.getVin()).thenReturn("1HGCM82633A004352");
-        when(car.getMake()).thenReturn("Honda");
-        when(car.getModel()).thenReturn("Accord");
-        when(car.getYear()).thenReturn(2003);
+        // InjectMocks автоматически создаёт экземпляр analyzerService с моком cache и counterService
+    }
+
+    @Test
+    @DisplayName("Should return car info when text is valid and not cached")
+    void shouldReturnCarInfoWhenTextIsValidAndNotCached() {
+        String validText = "Honda Accord 2003 1HGCM82633A004352";
+        String normalizedText = validText.trim().toUpperCase();
+        when(cache.getAnalyzedText(normalizedText)).thenReturn(Optional.empty());
+
+        Optional<CarInfo> result = analyzerService.analyzeText(validText);
+
+        assertTrue(result.isPresent());
+        CarInfo car = result.get();
+        assertEquals("Honda", car.getMake());
+        assertEquals("Accord", car.getModel());
+        assertEquals(2003, car.getYear());
+        assertEquals("1HGCM82633A004352", car.getVin());
+        verify(cache).getAnalyzedText(normalizedText);
+        verify(cache).putAnalyzedText(eq(normalizedText), any(Optional.class));
+        verify(counterService).increment();
+    }
+
+    @Test
+    @DisplayName("Should return cached car info when text is valid and cached")
+    void shouldReturnCachedCarInfoWhenTextIsValidAndCached() {
+        String validText = "Honda Accord 2003 1HGCM82633A004352";
+        String normalizedText = validText.trim().toUpperCase();
+        CarInfo cachedCar = new CarInfo();
+        cachedCar.setVin("1HGCM82633A004352");
+        cachedCar.setMake("Honda");
+        cachedCar.setModel("Accord");
+        cachedCar.setYear(2003);
+        when(cache.getAnalyzedText(normalizedText)).thenReturn(Optional.of(cachedCar));
+
+        Optional<CarInfo> result = analyzerService.analyzeText(validText);
+
+        assertTrue(result.isPresent());
+        assertEquals(cachedCar, result.get());
+        verify(cache).getAnalyzedText(normalizedText);
+        verify(cache, never()).putAnalyzedText(anyString(), any());
+        verify(counterService).increment();
     }
 
     @Test
@@ -43,75 +80,53 @@ class CarInfoAnalyzerServiceTest {
 
         assertFalse(result.isPresent());
         verify(cache, never()).getAnalyzedText(anyString());
+        verify(cache, never()).putAnalyzedText(anyString(), any());
+        verify(counterService).increment();
     }
 
     @Test
-    @DisplayName("Should return empty when text is empty")
-    void shouldReturnEmptyWhenTextIsEmpty() {
-        Optional<CarInfo> result = analyzerService.analyzeText("");
+    @DisplayName("Should return empty when text is blank")
+    void shouldReturnEmptyWhenTextIsBlank() {
+        Optional<CarInfo> result = analyzerService.analyzeText(" ");
 
         assertFalse(result.isPresent());
         verify(cache, never()).getAnalyzedText(anyString());
-    }
-
-    @Test
-    @DisplayName("Should return car from cache when text is cached")
-    void shouldReturnCarFromCacheWhenTextIsCached() {
-        String text = "Honda Accord 2003 1HGCM82633A004352";
-        when(cache.getAnalyzedText(text.toUpperCase())).thenReturn(Optional.of(car));
-
-        Optional<CarInfo> result = analyzerService.analyzeText(text);
-
-        assertTrue(result.isPresent());
-        assertEquals(car, result.get());
         verify(cache, never()).putAnalyzedText(anyString(), any());
+        verify(counterService).increment();
     }
 
     @Test
-    @DisplayName("Should analyze valid text and cache result")
-    void shouldAnalyzeValidTextAndCacheResult() {
-        String text = "Honda Accord 2003 1HGCM82633A004352";
-        when(cache.getAnalyzedText(text.toUpperCase())).thenReturn(Optional.empty());
+    @DisplayName("Should return empty when VIN is invalid")
+    void shouldReturnEmptyWhenVinIsInvalid() {
+        String invalidText = "Honda Accord 2003 INVALID_VIN";
+        String normalizedText = invalidText.trim().toUpperCase();
+        when(cache.getAnalyzedText(normalizedText)).thenReturn(Optional.empty());
+
+        Optional<CarInfo> result = analyzerService.analyzeText(invalidText);
+
+        assertFalse(result.isPresent());
+        verify(cache).getAnalyzedText(normalizedText);
+        verify(cache).putAnalyzedText(normalizedText, Optional.empty());
+        verify(counterService).increment();
+    }
+
+    @Test
+    @DisplayName("Should return default year and unknown make/model when not found")
+    void shouldReturnDefaultYearAndUnknownMakeModelWhenNotFound() {
+        String text = "Unknown Brand 1HGCM82633A004352";
+        String normalizedText = text.trim().toUpperCase();
+        when(cache.getAnalyzedText(normalizedText)).thenReturn(Optional.empty());
 
         Optional<CarInfo> result = analyzerService.analyzeText(text);
 
         assertTrue(result.isPresent());
-        verify(cache).putAnalyzedText(eq(text.toUpperCase()), any(Optional.class));
-    }
-
-    @Test
-    @DisplayName("Should return empty for invalid VIN and cache result")
-    void shouldReturnEmptyForInvalidVinAndCacheResult() {
-        String text = "Honda Accord 2003 INVALID_VIN";
-        when(cache.getAnalyzedText(text.toUpperCase())).thenReturn(Optional.empty());
-
-        Optional<CarInfo> result = analyzerService.analyzeText(text);
-
-        assertFalse(result.isPresent());
-        verify(cache).putAnalyzedText(text.toUpperCase(), Optional.empty());
-    }
-
-    @Test
-    @DisplayName("Should analyze text with no make or model and cache result")
-    void shouldAnalyzeTextWithNoMakeOrModelAndCacheResult() {
-        String text = "Car 2003 1HGCM82633A004352";
-        when(cache.getAnalyzedText(text.toUpperCase())).thenReturn(Optional.empty());
-
-        Optional<CarInfo> result = analyzerService.analyzeText(text);
-
-        assertTrue(result.isPresent());
-        verify(cache).putAnalyzedText(eq(text.toUpperCase()), any(Optional.class));
-    }
-
-    @Test
-    @DisplayName("Should return empty for invalid year and cache result")
-    void shouldReturnEmptyForInvalidYearAndCacheResult() {
-        String text = "Honda Accord invalid 1HGCM82633A004352";
-        when(cache.getAnalyzedText(text.toUpperCase())).thenReturn(Optional.empty());
-
-        Optional<CarInfo> result = analyzerService.analyzeText(text);
-
-        assertFalse(result.isPresent());
-        verify(cache).putAnalyzedText(text.toUpperCase(), Optional.empty());
+        CarInfo car = result.get();
+        assertEquals("1HGCM82633A004352", car.getVin());
+        assertEquals("Unknown", car.getMake());
+        assertEquals("Unknown", car.getModel());
+        assertEquals(2000, car.getYear());
+        verify(cache).getAnalyzedText(normalizedText);
+        verify(cache).putAnalyzedText(eq(normalizedText), any(Optional.class));
+        verify(counterService).increment();
     }
 }

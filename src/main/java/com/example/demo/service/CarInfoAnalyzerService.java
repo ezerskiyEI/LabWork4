@@ -16,13 +16,16 @@ public class CarInfoAnalyzerService {
     private static final Pattern MAKE_MODEL_PATTERN = Pattern.compile("(Toyota|Honda|BMW|Audi|Mercedes|Ford|Volkswagen|Chevrolet)\\s+(\\w+)");
 
     private final AppCache cache;
+    private final RequestCounterService counterService;
 
     @Autowired
-    public CarInfoAnalyzerService(AppCache cache) {
+    public CarInfoAnalyzerService(AppCache cache, RequestCounterService counterService) {
         this.cache = cache;
+        this.counterService = counterService;
     }
 
     public Optional<CarInfo> analyzeText(String text) {
+        counterService.increment();
         if (text == null || text.isBlank()) {
             return Optional.empty();
         }
