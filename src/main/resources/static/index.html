@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Управление информацией об автомобилях</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body class="bg-gradient-to-br from-green-100 to-green-400 font-inter min-h-screen">
+<nav class="bg-green-800 text-white p-4 shadow-lg">
+    <div class="container mx-auto flex justify-between items-center">
+        <h1 class="text-3xl font-bold flex items-center">
+            <i class="fas fa-car mr-2"></i>Управление информацией об автомобилях
+        </h1>
+        <p class="text-lg">Всего запросов к API: <span id="counter" class="font-bold text-green-400">0</span></p>
+    </div>
+</nav>
+
+<div class="container mx-auto p-8">
+    <!-- Вкладки -->
+    <div class="flex border-b border-green-300 mb-6">
+        <button id="carsTab" class="flex-1 py-3 px-4 text-lg font-semibold text-green-900 border-b-2 border-transparent hover:border-green-600 transition focus:outline-none active-tab">
+            <i class="fas fa-car-side mr-2"></i>Автомобили
+        </button>
+        <button id="ownersTab" class="flex-1 py-3 px-4 text-lg font-semibold text-green-900 border-b-2 border-transparent hover:border-green-600 transition focus:outline-none">
+            <i class="fas fa-users mr-2"></i>Владельцы
+        </button>
+    </div>
+
+    <!-- Секция автомобилей -->
+    <div id="carsSection" class="tab-content">
+        <!-- Поиск по VIN (основная функция) -->
+        <h2 class="text-2xl font-bold text-green-900 mb-4">Поиск по VIN</h2>
+        <div class="bg-white p-4 rounded-lg shadow-lg mb-6">
+            <input type="text" id="vinSearch" class="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="Введите VIN для поиска (например: 4T1BF1FK0CU123456)">
+            <button id="searchBtn" class="mt-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition inline-flex items-center">
+                <i class="fas fa-search mr-2"></i>Найти
+            </button>
+            <div id="searchResult" class="mt-4"></div>
+        </div>
+
+        <h2 class="text-4xl font-bold text-green-900 mb-4">Список автомобилей</h2>
+        <!-- Сортировка -->
+        <div class="mb-4 flex items-center space-x-4">
+            <label for="sortBy" class="text-lg font-semibold text-green-900">Сортировать по:</label>
+            <select id="sortBy" class="p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+                <option value="make">Марка</option>
+                <option value="model">Модель</option>
+            </select>
+            <button id="sortBtn" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition inline-flex items-center shadow-md">
+                <i class="fas fa-sort mr-2"></i>Сортировать
+            </button>
+        </div>
+        <button id="addCarBtn" class="mb-4 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition inline-flex items-center shadow-md">
+            <i class="fas fa-plus mr-2"></i>Добавить автомобиль
+        </button>
+        <table class="min-w-full bg-white shadow-lg rounded-lg overflow-hidden">
+            <thead class="bg-green-700 text-white">
+            <tr>
+                <th class="px-4 py-3 text-left text-sm font-semibold uppercase tracking-wider">VIN</th>
+                <th class="px-4 py-3 text-left text-sm font-semibold uppercase tracking-wider">Марка</th>
+                <th class="px-4 py-3 text-left text-sm font-semibold uppercase tracking-wider">Модель</th>
+                <th class="px-4 py-3 text-left text-sm font-semibold uppercase tracking-wider">Год</th>
+                <th class="px-4 py-3 text-left text-sm font-semibold uppercase tracking-wider">Владелец</th>
+                <th class="px-4 py-3 text-left text-sm font-semibold uppercase tracking-wider">Действия</th>
+            </tr>
+            </thead>
+            <tbody id="carTableBody"></tbody>
+        </table>
+
+        <!-- Блок для ошибки 404 -->
+        <div id="error404" class="hidden mt-6">
+            <h2 class="text-2xl font-bold text-red-600 mb-2">Ошибка 404 - Автомобиль не найден</h2>
+            <img src="/images/error404.jpg" alt="Ошибка 404" class="max-w-full h-auto rounded-lg shadow-lg">
+        </div>
+    </div>
+
+    <!-- Секция владельцев -->
+    <div id="ownersSection" class="tab-content hidden">
+        <h2 class="text-4xl font-bold text-green-900 mb-4">Список владельцев</h2>
+        <button id="addOwnerBtn" class="mb-4 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition inline-flex items-center shadow-md">
+            <i class="fas fa-plus mr-2"></i>Добавить владельца
+        </button>
+        <table class="min-w-full bg-white shadow-lg rounded-lg overflow-hidden">
+            <thead class="bg-green-700 text-white">
+            <tr>
+                <th class="px-4 py-3 text-left text-sm font-semibold uppercase tracking-wider">ID</th>
+                <th class="px-4 py-3 text-left text-sm font-semibold uppercase tracking-wider">Имя</th>
+                <th class="px-4 py-3 text-left text-sm font-semibold uppercase tracking-wider">Автомобили</th>
+                <th class="px-4 py-3 text-left text-sm font-semibold uppercase tracking-wider">Действия</th>
+            </tr>
+            </thead>
+            <tbody id="ownerTableBody"></tbody>
+        </table>
+    </div>
+
+    <!-- Модальное окно для автомобилей -->
+    <div id="carModal" class="modal hidden fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center z-50">
+        <div class="modal-content bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+        <span id="closeCarModal" class="close absolute top-4 right-4 text-gray-600 hover:text-gray-800 cursor-pointer">
+          <i class="fas fa-times text-2xl"></i>
+        </span>
+            <h2 id="carFormTitle" class="text-2xl font-bold text-green-900 mb-4">Добавить автомобиль</h2>
+            <form id="carForm">
+                <div class="mb-4">
+                    <label for="carVin" class="block text-sm font-medium text-gray-700">VIN</label>
+                    <input type="text" id="carVin" name="vin" class="mt-1 block w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" required>
+                </div>
+                <div class="mb-4">
+                    <label for="carMake" class="block text-sm font-medium text-gray-700">Марка</label>
+                    <input type="text" id="carMake" name="make" class="mt-1 block w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" required>
+                </div>
+                <div class="mb-4">
+                    <label for="carModel" class="block text-sm font-medium text-gray-700">Модель</label>
+                    <input type="text" id="carModel" name="model" class="mt-1 block w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" required>
+                </div>
+                <div class="mb-4">
+                    <label for="carYear" class="block text-sm font-medium text-gray-700">Год</label>
+                    <input type="number" id="carYear" name="year" class="mt-1 block w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" required>
+                </div>
+                <div class="mb-4">
+                    <label for="carOwnerId" class="block text-sm font-medium text-gray-700">ID владельца</label>
+                    <input type="number" id="carOwnerId" name="ownerId" class="mt-1 block w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" required>
+                </div>
+                <button type="submit" class="w-full bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition">Сохранить</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Модальное окно для владельцев -->
+    <div id="ownerModal" class="modal hidden fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center z-50">
+        <div class="modal-content bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+        <span id="closeOwnerModal" class="close absolute top-4 right-4 text-gray-600 hover:text-gray-800 cursor-pointer">
+          <i class="fas fa-times text-2xl"></i>
+        </span>
+            <h2 id="ownerFormTitle" class="text-2xl font-bold text-green-900 mb-4">Добавить владельца</h2>
+            <form id="ownerForm">
+                <div class="mb-4">
+                    <label for="ownerId" class="block text-sm font-medium text-gray-700">ID владельца</label>
+                    <input type="number" id="ownerId" name="id" class="mt-1 block w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" required>
+                </div>
+                <div class="mb-4">
+                    <label for="ownerName" class="block text-sm font-medium text-gray-700">Имя</label>
+                    <input type="text" id="ownerName" name="name" class="mt-1 block w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" required>
+                </div>
+                <button type="submit" class="w-full bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition">Сохранить</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="utilits.js"></script>
+<script src="app.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        fetchCounter();
+        initializeTabs();
+        fetchCars();
+        fetchOwners();
+    });
+</script>
+</body>
+</html>

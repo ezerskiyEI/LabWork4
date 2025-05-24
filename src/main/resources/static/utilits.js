@@ -13,12 +13,12 @@ async function sendRequest(method, url, body = null) {
 
 function showModal(modal) {
     modal.classList.remove('hidden');
-    modal.classList.add('flex');
+    setTimeout(() => modal.classList.add('show'), 10); // Небольшая задержка для анимации
 }
 
 function hideModal(modal) {
-    modal.classList.remove('flex');
-    modal.classList.add('hidden');
+    modal.classList.remove('show');
+    setTimeout(() => modal.classList.add('hidden'), 300); // Задержка соответствует времени анимации
 }
 
 async function fetchCounter() {

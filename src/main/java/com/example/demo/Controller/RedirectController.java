@@ -10,14 +10,4 @@ public class RedirectController {
     public String redirectToIndex() {
         return "redirect:/index.html";
     }
-
-    @GetMapping("/cars")
-    public String redirectToCars() {
-        return "redirect:/cars.html";
-    }
-
-    @GetMapping("/owners")
-    public String redirectToOwners() {
-        return "redirect:/owners.html";
-    }
 }
