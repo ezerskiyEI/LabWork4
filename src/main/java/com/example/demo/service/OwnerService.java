@@ -103,4 +103,27 @@ public class OwnerService {
         cache.evictAllCarLists();
         return true;
     }
+
+    // Добавляем методы, которых требуют контроллеры
+    public List<Owner> getAll() {
+        return getAllOwners();
+    }
+
+    public Optional<Owner> getById(Long id) {
+        return getOwner(id);
+    }
+
+    public Owner create(Owner owner) {
+        return addOwner(owner);
+    }
+
+    public Owner update(Owner owner) {
+        return updateOwner(owner.getId(), owner).orElseThrow(() -> new RuntimeException("Owner not found"));
+    }
+
+    public void delete(Long id) {
+        if (!deleteOwner(id)) {
+            throw new RuntimeException("Owner not found");
+        }
+    }
 }

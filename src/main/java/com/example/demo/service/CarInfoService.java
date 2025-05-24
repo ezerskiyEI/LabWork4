@@ -127,4 +127,27 @@ public class CarInfoService {
         cache.putCarList("all_cars", cars);
         return cars;
     }
+
+
+    public List<CarInfo> getAll() {
+        return getAllCars();
+    }
+
+    public Optional<CarInfo> getByVin(String vin) {
+        return getCarByVin(vin);
+    }
+
+    public CarInfo create(CarInfo carInfo) {
+        return addCar(carInfo);
+    }
+
+    public CarInfo update(CarInfo carInfo) {
+        return updateCar(carInfo.getVin(), carInfo).orElseThrow(() -> new RuntimeException("Car not found"));
+    }
+
+    public void delete(String vin) {
+        if (!deleteCar(vin)) {
+            throw new RuntimeException("Car not found");
+        }
+    }
 }

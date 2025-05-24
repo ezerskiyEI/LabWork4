@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Управление информацией об автомобилях</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body class="bg-gradient-to-br from-green-100 to-green-400 font-inter min-h-screen">
+<nav class="bg-green-800 text-white p-4 shadow-lg">
+    <div class="container mx-auto flex justify-between items-center">
+        <h1 class="text-3xl font-bold flex items-center">
+            <i class="fas fa-car mr-2"></i>Управление информацией об автомобилях
+        </h1>
+        <div class="space-x-4">
+            <a href="/" class="hover:bg-green-900 px-4 py-2 rounded-lg transition inline-flex items-center text-lg shadow-md">
+                <i class="fas fa-home mr-2"></i>Главная
+            </a>
+            <a href="/cars" class="hover:bg-green-900 px-4 py-2 rounded-lg transition inline-flex items-center text-lg shadow-md">
+                <i class="fas fa-car-side mr-2"></i>Автомобили
+            </a>
+            <a href="/owners" class="hover:bg-green-900 px-4 py-2 rounded-lg transition inline-flex items-center text-lg shadow-md">
+                <i class="fas fa-users mr-2"></i>Владельцы
+            </a>
+        </div>
+    </div>
+</nav>
+<div class="container mx-auto p-8 text-center">
+    <h2 class="text-5xl font-bold text-green-900 mb-4 animate-pulse">Добро пожаловать в управление информацией об автомобилях</h2>
+    <p class="text-xl text-gray-800 mb-4">Управляйте автомобилями и их владельцами с помощью современного и удобного интерфейса.</p>
+    <p class="text-xl text-gray-800">Всего запросов к API: <span id="counter" class="font-bold text-green-700">0</span></p>
+</div>
+<script src="/js/utils.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        fetchCounter();
+    });
+</script>
+</body>
+</html>

@@ -1,6 +1,7 @@
 package com.example.demo.Controller;
 
 import com.example.demo.service.RequestCounterService;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -16,7 +17,7 @@ public class RequestCounterController {
     }
 
     @GetMapping
-    public long getRequestCount() {
-        return counterService.getRequestCount();
+    public ResponseEntity<Class<? extends RequestCounterService>> getCounter() {
+        return ResponseEntity.ok(counterService.getClass());
     }
 }
